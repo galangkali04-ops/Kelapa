@@ -225,12 +225,15 @@ function cell(c, r) {
   }
 }
 
-export function dataTable(columns, rows, { actions, emptyText = 'Belum ada data.', stack = false } = {}) {
+export function dataTable(columns, rows, { actions, emptyText = 'Belum ada data.', stack = false, onRowClick } = {}) {
   if (!rows.length) return h('p', { class: 'empty' }, emptyText);
   const cls = (c) => (numericTypes.includes(c.type) ? 'num' : '');
   return h('div', { class: 'table-wrap' }, h('table', { class: stack ? 'stack' : null },
     h('thead', {}, h('tr', {}, columns.map((c) => h('th', { class: cls(c) }, c.label)), actions ? h('th', {}) : null)),
-    h('tbody', {}, rows.map((r) => h('tr', {},
+    h('tbody', {}, rows.map((r) => h('tr', {
+      class: onRowClick ? 'clickable' : null,
+      onclick: onRowClick ? (e) => { if (!e.target.closest('.actions')) onRowClick(r); } : null,
+    },
       columns.map((c) => h('td', { class: cls(c), 'data-label': c.label }, cell(c, r))),
       actions ? h('td', { class: 'actions' }, actions(r)) : null)))));
 }

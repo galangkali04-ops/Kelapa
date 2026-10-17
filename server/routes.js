@@ -70,6 +70,41 @@ api.post('/restore', (req, res) => {
   return res.json({ ok: true });
 });
 
+// Catat hasil satu pengiriman sekaligus: botol terjual + botol kembali (retur) dalam satu langkah.
+api.post('/deliveries/:id/result', (req, res) => {
+  const b = req.body || {};
+  const soldQty = b.soldQty === '' || b.soldQty == null ? 0 : Number(b.soldQty);
+  const retQty = b.returnedQty === '' || b.returnedQty == null ? 0 : Number(b.returnedQty);
+  if (!Number.isInteger(soldQty) || soldQty < 0) return res.status(400).json({ error: 'Jumlah terjual harus bilangan bulat 0 atau lebih.' });
+  if (!Number.isInteger(retQty) || retQty < 0) return res.status(400).json({ error: 'Jumlah kembali harus bilangan bulat 0 atau lebih.' });
+  if (soldQty + retQty === 0) return res.status(400).json({ error: 'Isi jumlah terjual atau jumlah kembali.' });
+  const date = String(b.date || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return res.status(400).json({ error: 'Tanggal tidak valid.' });
+  const priceIn = b.price === '' || b.price == null ? null : Number(b.price);
+  if (priceIn !== null && (!Number.isFinite(priceIn) || priceIn < 0)) return res.status(400).json({ error: 'Harga harus angka 0 atau lebih.' });
+
+  return mutate(res, (db) => {
+    const d = db.deliveries.find((x) => x.id === req.params.id);
+    if (!d) return { error: 'Pengiriman tidak ditemukan.', status: 404 };
+    const now = new Date().toISOString();
+    if (soldQty > 0) {
+      db.sales.push({
+        id: crypto.randomUUID(), date, deliveryId: d.id, qty: soldQty,
+        price: priceIn === null ? Number(d.price) || 0 : priceIn,
+        paid: b.paid === true || b.paid === 'true', note: '', createdAt: now,
+      });
+    }
+    if (retQty > 0) {
+      db.returns.push({
+        id: crypto.randomUUID(), date, deliveryId: d.id, qty: retQty,
+        condition: b.condition === 'rusak' ? 'rusak' : 'layak',
+        reason: String(b.reason || '').trim().slice(0, 500), note: '', createdAt: now,
+      });
+    }
+    return { value: { ok: true } };
+  });
+});
+
 api.get('/:col', (req, res) => {
   if (!schemas[req.params.col]) return res.status(404).json({ error: 'Data tidak ditemukan.' });
   return res.json(calc.list(store.get(), req.params.col));

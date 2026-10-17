@@ -3,6 +3,7 @@
 //  Owner bisa mengubah atau menambah isi aplikasi dari file ini:
 //   - Tambah/ubah kolom tabel  -> edit `columns`
 //   - Tambah/ubah isian form   -> edit `fields` (field baru otomatis tersimpan)
+//   - Menu utama di HP/iPad portrait -> beri `primary: true`; menu lainnya masuk ke tombol hamburger
 //   - Tambah menu/halaman baru -> salin salah satu blok bertipe 'crud' di bawah,
 //                                 lalu lihat README bagian "Menambah fitur".
 //  Jenis field: text, textarea, number, money, int, date, select, checkbox
@@ -13,8 +14,8 @@ const badge = (text, kind = '') => h('span', { class: `badge ${kind}` }, text);
 const csv = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boolean);
 
 export const PAGES = [
-  { id: 'dashboard', label: 'Ringkasan', type: 'dashboard' },
-  { id: 'batches', label: 'Produksi & HPP', type: 'batches' },
+  { id: 'dashboard', label: 'Ringkasan', type: 'dashboard', primary: true },
+  { id: 'batches', label: 'Produksi & HPP', type: 'batches', primary: true },
 
   {
     id: 'expenses', label: 'Biaya pengeluaran', type: 'crud', collection: 'expenses', singular: 'pengeluaran',
@@ -76,8 +77,9 @@ export const PAGES = [
   },
 
   {
-    id: 'deliveries', label: 'Pengiriman', type: 'crud', collection: 'deliveries', singular: 'pengiriman',
-    intro: 'Catat botol yang dikirim ke mitra. Jumlah kirim tidak bisa melebihi stok gudang batch tersebut.',
+    id: 'deliveries', label: 'Pengiriman', primary: true, type: 'crud', collection: 'deliveries', singular: 'pengiriman',
+    intro: 'Catat botol yang dikirim ke mitra. Klik salah satu pengiriman (atau tombol Catat hasil) untuk langsung mengisi berapa yang terjual dan berapa yang kembali.',
+    quickResult: true,
     columns: [
       { key: 'date', label: 'Tanggal', type: 'date' },
       { key: 'partnerName', label: 'Mitra' },
