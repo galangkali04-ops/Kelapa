@@ -1,0 +1,1612 @@
+{
+  "settings": {
+    "businessName": "Air Kelapa Saya",
+    "codePrefix": "KLP",
+    "shelfLifeDays": 4,
+    "partnerTypes": "Mart, Kafe, Reseller, Langsung",
+    "returnReasons": "Tidak laku, Kemasan rusak, Mendekati expired",
+    "expenseCategories": "Sampah, Gaji staff, Beli botol kaca, Listrik & gas, Transport / bensin, Perawatan alat, Pengeluaran tak terduga, Lainnya"
+  },
+  "materials": [
+    {
+      "id": "d0bed106-4046-494c-947e-e24d4e6b3e42",
+      "name": "Kelapa 9k",
+      "unit": "butir",
+      "price": 9000,
+      "note": "",
+      "createdAt": "2026-10-10T03:45:02.696Z"
+    },
+    {
+      "id": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+      "name": "Kelapa 10k",
+      "unit": "butir",
+      "price": 10000,
+      "note": "",
+      "createdAt": "2026-10-10T03:45:13.842Z"
+    },
+    {
+      "id": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+      "name": "Botol Kaca",
+      "unit": "pcs",
+      "price": 1307,
+      "note": "Setelah di kurangi 70% botol yang kembali",
+      "createdAt": "2026-10-10T03:45:46.767Z",
+      "updatedAt": "2026-10-10T04:30:42.788Z"
+    },
+    {
+      "id": "7f72d680-91a6-44c1-b64c-ca2843ab497c",
+      "name": "Botol Plastik 600ML",
+      "unit": "pcs",
+      "price": 1500,
+      "note": "Sekali pemakaian",
+      "createdAt": "2026-10-10T03:46:03.554Z",
+      "updatedAt": "2026-10-10T03:46:15.544Z"
+    },
+    {
+      "id": "0ba437c3-b525-49c3-b7d2-70ac4c74c111",
+      "name": "Tutup botol Kaca",
+      "unit": "pcs",
+      "price": 200,
+      "note": "",
+      "createdAt": "2026-10-10T03:46:37.143Z"
+    },
+    {
+      "id": "439e89df-ad6f-4074-80e1-f9b1b7cda237",
+      "name": "Tutup Ulir",
+      "unit": "pcs",
+      "price": 7,
+      "note": "",
+      "createdAt": "2026-10-10T03:46:50.542Z"
+    },
+    {
+      "id": "113b278c-d856-4f58-9ce3-8bfb0f0bbb99",
+      "name": "Stiker Vynyl 5,5 x 5,5",
+      "unit": "pcs",
+      "price": 383,
+      "note": "",
+      "createdAt": "2026-10-10T03:47:24.317Z"
+    },
+    {
+      "id": "037bb455-94ca-4c22-9373-6b6e22d77c59",
+      "name": "Stiker Huruf 5x2",
+      "unit": "pcs",
+      "price": 140,
+      "note": "",
+      "createdAt": "2026-10-10T03:47:48.643Z"
+    },
+    {
+      "id": "4d8fc0bb-320a-462f-aa0e-adcc2c3c48bc",
+      "name": "Stiker Segel 1,5 x 7",
+      "unit": "pcs",
+      "price": 80,
+      "note": "Stiker Bontak",
+      "createdAt": "2026-10-10T03:48:09.057Z",
+      "updatedAt": "2026-10-10T03:49:01.633Z"
+    },
+    {
+      "id": "e5944084-450a-40cf-a90c-50c9437bb197",
+      "name": "Stiker Barcode 2 x 5",
+      "unit": "pcs",
+      "price": 9,
+      "note": "Stiker Bontak",
+      "createdAt": "2026-10-10T03:48:28.015Z",
+      "updatedAt": "2026-10-10T03:48:47.452Z"
+    },
+    {
+      "id": "d228c1ef-8b03-4f37-8c6c-fbc4fbf0ed0b",
+      "name": "Stiker Wilis 6x 6,5",
+      "unit": "pcs",
+      "price": 584,
+      "note": "Transparan",
+      "createdAt": "2026-10-10T03:49:34.210Z",
+      "updatedAt": "2026-10-10T03:50:15.587Z"
+    },
+    {
+      "id": "b3bc7606-53d5-4eaf-a96b-fb02dd211d68",
+      "name": "Stiker Malaka Mart",
+      "unit": "pcs",
+      "price": 875,
+      "note": "Transparan",
+      "createdAt": "2026-10-10T03:50:04.862Z"
+    },
+    {
+      "id": "f0543855-9bed-4fca-9efc-e32bf804469d",
+      "name": "Wili's",
+      "unit": "Botol",
+      "price": 2173,
+      "note": "botol + stiker",
+      "createdAt": "2026-10-10T04:33:33.621Z"
+    },
+    {
+      "id": "f5c4521b-83a2-4b31-abc6-95a9895c1487",
+      "name": "ONM",
+      "unit": "Botol",
+      "price": 2103,
+      "note": "botol + stiker",
+      "createdAt": "2026-10-10T04:34:32.181Z",
+      "updatedAt": "2026-10-10T04:34:44.334Z"
+    },
+    {
+      "id": "fc431ea1-90b4-4c91-bc90-aead56246831",
+      "name": "S5M",
+      "unit": "Botol",
+      "price": 2103,
+      "note": "botol + stiker",
+      "createdAt": "2026-10-10T04:35:17.472Z",
+      "updatedAt": "2026-10-10T04:35:27.019Z"
+    },
+    {
+      "id": "8389e873-d73a-4ca5-9313-ba454197a943",
+      "name": "MM",
+      "unit": "Botol",
+      "price": 2445,
+      "note": "botol + stiker",
+      "createdAt": "2026-10-10T04:36:16.778Z"
+    }
+  ],
+  "partners": [
+    {
+      "id": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "name": "Santai Recovery Spa",
+      "type": "Langsung",
+      "scheme": "putus",
+      "price": 20000,
+      "contact": "",
+      "address": "",
+      "note": "",
+      "createdAt": "2026-10-10T04:18:36.883Z"
+    },
+    {
+      "id": "404e7ebf-3b3d-489d-991f-5fddf7ab85ed",
+      "name": "One Nine Mart",
+      "type": "Mart",
+      "scheme": "titip",
+      "price": 18000,
+      "contact": "",
+      "address": "",
+      "note": "",
+      "createdAt": "2026-10-10T04:18:55.730Z"
+    },
+    {
+      "id": "ab275808-8c32-46f0-b3d0-d6e02b933000",
+      "name": "Wilis Mart",
+      "type": "Mart",
+      "scheme": "titip",
+      "price": 18000,
+      "contact": "",
+      "address": "",
+      "note": "",
+      "createdAt": "2026-10-10T04:19:18.300Z"
+    },
+    {
+      "id": "7908a8f9-7ddd-436d-86bb-25a93450f49b",
+      "name": "Sure 5 Minimarket",
+      "type": "Mart",
+      "scheme": "titip",
+      "price": 18000,
+      "contact": "",
+      "address": "",
+      "note": "",
+      "createdAt": "2026-10-10T04:19:39.092Z"
+    },
+    {
+      "id": "f15bd3a7-7161-48d7-a073-1200dac57e19",
+      "name": "Malaka Mart",
+      "type": "Mart",
+      "scheme": "titip",
+      "price": 18000,
+      "contact": "",
+      "address": "",
+      "note": "",
+      "createdAt": "2026-10-10T04:19:52.201Z"
+    }
+  ],
+  "batches": [
+    {
+      "id": "cd2f248a-71bb-409f-9b30-8c85a4e85dd6",
+      "code": "SRS",
+      "date": "2026-10-01",
+      "shelfLifeDays": 3,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 1100
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 13,
+          "price": 10000
+        },
+        {
+          "materialId": "0ba437c3-b525-49c3-b7d2-70ac4c74c111",
+          "name": "Tutup botol Kaca",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 200
+        },
+        {
+          "materialId": "439e89df-ad6f-4074-80e1-f9b1b7cda237",
+          "name": "Tutup Ulir",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 7
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T03:56:47.526Z"
+    },
+    {
+      "id": "8acf22b6-c672-4ed8-a66c-8b4eee062a03",
+      "code": "SRS",
+      "date": "2026-10-02",
+      "shelfLifeDays": 3,
+      "goodBottles": 25,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 1100
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 22,
+          "price": 10000
+        },
+        {
+          "materialId": "0ba437c3-b525-49c3-b7d2-70ac4c74c111",
+          "name": "Tutup botol Kaca",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 200
+        },
+        {
+          "materialId": "439e89df-ad6f-4074-80e1-f9b1b7cda237",
+          "name": "Tutup Ulir",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 7
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T03:59:24.684Z"
+    },
+    {
+      "id": "285921d7-bb61-4a19-aa3b-aadadd0da27c",
+      "code": "SRS",
+      "date": "2026-10-03",
+      "shelfLifeDays": 3,
+      "goodBottles": 25,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 1100
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 22,
+          "price": 10000
+        },
+        {
+          "materialId": "0ba437c3-b525-49c3-b7d2-70ac4c74c111",
+          "name": "Tutup botol Kaca",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 200
+        },
+        {
+          "materialId": "439e89df-ad6f-4074-80e1-f9b1b7cda237",
+          "name": "Tutup Ulir",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 7
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:15:04.243Z"
+    },
+    {
+      "id": "4ffe22df-5741-4228-b084-addc72f39194",
+      "code": "WM",
+      "date": "2026-10-03",
+      "shelfLifeDays": 3,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "7f72d680-91a6-44c1-b64c-ca2843ab497c",
+          "name": "Botol Plastik 600ML",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 1500
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 12,
+          "price": 10000
+        },
+        {
+          "materialId": "e5944084-450a-40cf-a90c-50c9437bb197",
+          "name": "Stiker Barcode 2 x 5",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 9
+        },
+        {
+          "materialId": "4d8fc0bb-320a-462f-aa0e-adcc2c3c48bc",
+          "name": "Stiker Segel 1,5 x 7",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 80
+        },
+        {
+          "materialId": "d228c1ef-8b03-4f37-8c6c-fbc4fbf0ed0b",
+          "name": "Stiker Wilis 6x 6,5",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 584
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:17:40.562Z",
+      "updatedAt": "2026-10-10T04:22:09.619Z"
+    },
+    {
+      "id": "a19342ca-f6a3-4c83-bdd2-0671846bffbd",
+      "code": "ONM",
+      "date": "2026-10-03",
+      "shelfLifeDays": 3,
+      "goodBottles": 10,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "7f72d680-91a6-44c1-b64c-ca2843ab497c",
+          "name": "Botol Plastik 600ML",
+          "unit": "pcs",
+          "qty": 10,
+          "price": 1500
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 7,
+          "price": 10000
+        },
+        {
+          "materialId": "037bb455-94ca-4c22-9373-6b6e22d77c59",
+          "name": "Stiker Huruf 5x2",
+          "unit": "pcs",
+          "qty": 10,
+          "price": 140
+        },
+        {
+          "materialId": "113b278c-d856-4f58-9ce3-8bfb0f0bbb99",
+          "name": "Stiker Vynyl 5,5 x 5,5",
+          "unit": "pcs",
+          "qty": 10,
+          "price": 383
+        },
+        {
+          "materialId": "4d8fc0bb-320a-462f-aa0e-adcc2c3c48bc",
+          "name": "Stiker Segel 1,5 x 7",
+          "unit": "pcs",
+          "qty": 10,
+          "price": 80
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:22:36.632Z",
+      "updatedAt": "2026-10-10T04:23:35.911Z"
+    },
+    {
+      "id": "0e323c4d-9814-4f0d-b393-08508e868b8c",
+      "code": "S5M",
+      "date": "2026-10-03",
+      "shelfLifeDays": 3,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "7f72d680-91a6-44c1-b64c-ca2843ab497c",
+          "name": "Botol Plastik 600ML",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 1500
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 12,
+          "price": 10000
+        },
+        {
+          "materialId": "4d8fc0bb-320a-462f-aa0e-adcc2c3c48bc",
+          "name": "Stiker Segel 1,5 x 7",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 80
+        },
+        {
+          "materialId": "113b278c-d856-4f58-9ce3-8bfb0f0bbb99",
+          "name": "Stiker Vynyl 5,5 x 5,5",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 383
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:23:11.046Z"
+    },
+    {
+      "id": "4a9a908d-2e22-43f0-b766-7ca2d591047c",
+      "code": "SRS",
+      "date": "2026-10-04",
+      "shelfLifeDays": 3,
+      "goodBottles": 30,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 30,
+          "price": 1100
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 26,
+          "price": 10000
+        },
+        {
+          "materialId": "0ba437c3-b525-49c3-b7d2-70ac4c74c111",
+          "name": "Tutup botol Kaca",
+          "unit": "pcs",
+          "qty": 30,
+          "price": 200
+        },
+        {
+          "materialId": "439e89df-ad6f-4074-80e1-f9b1b7cda237",
+          "name": "Tutup Ulir",
+          "unit": "pcs",
+          "qty": 30,
+          "price": 7
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:27:58.461Z"
+    },
+    {
+      "id": "52d230ef-292e-4ec5-bd7b-c9a4b63bc078",
+      "code": "SRS",
+      "date": "2026-10-05",
+      "shelfLifeDays": 3,
+      "goodBottles": 25,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 1100
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 22,
+          "price": 10000
+        },
+        {
+          "materialId": "0ba437c3-b525-49c3-b7d2-70ac4c74c111",
+          "name": "Tutup botol Kaca",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 200
+        },
+        {
+          "materialId": "439e89df-ad6f-4074-80e1-f9b1b7cda237",
+          "name": "Tutup Ulir",
+          "unit": "pcs",
+          "qty": 25,
+          "price": 7
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:28:26.168Z"
+    },
+    {
+      "id": "521dbe34-d7b6-4a61-adda-601128f64905",
+      "code": "SRS",
+      "date": "2026-10-06",
+      "shelfLifeDays": 3,
+      "goodBottles": 35,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 35,
+          "price": 1100
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 30,
+          "price": 10000
+        },
+        {
+          "materialId": "0ba437c3-b525-49c3-b7d2-70ac4c74c111",
+          "name": "Tutup botol Kaca",
+          "unit": "pcs",
+          "qty": 35,
+          "price": 200
+        },
+        {
+          "materialId": "439e89df-ad6f-4074-80e1-f9b1b7cda237",
+          "name": "Tutup Ulir",
+          "unit": "pcs",
+          "qty": 35,
+          "price": 7
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:28:52.304Z"
+    },
+    {
+      "id": "7981bfce-dceb-49b1-a086-c9bf64b4e3d4",
+      "code": "SRS",
+      "date": "2026-10-07",
+      "shelfLifeDays": 3,
+      "goodBottles": 10,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 10,
+          "price": 1100
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 8,
+          "price": 10000
+        },
+        {
+          "materialId": "0ba437c3-b525-49c3-b7d2-70ac4c74c111",
+          "name": "Tutup botol Kaca",
+          "unit": "pcs",
+          "qty": 10,
+          "price": 200
+        },
+        {
+          "materialId": "439e89df-ad6f-4074-80e1-f9b1b7cda237",
+          "name": "Tutup Ulir",
+          "unit": "pcs",
+          "qty": 10,
+          "price": 7
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:29:21.564Z"
+    },
+    {
+      "id": "cf243baa-d606-42ae-b9c2-cebe3533be83",
+      "code": "S5M",
+      "date": "2026-10-06",
+      "shelfLifeDays": 3,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 13,
+          "price": 10000
+        },
+        {
+          "materialId": "fc431ea1-90b4-4c91-bc90-aead56246831",
+          "name": "S5M",
+          "unit": "Botol",
+          "qty": 15,
+          "price": 2103
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:36:45.639Z"
+    },
+    {
+      "id": "a792a1a1-7c47-4e29-b8d7-d3118c70f188",
+      "code": "ONM",
+      "date": "2026-10-07",
+      "shelfLifeDays": 4,
+      "goodBottles": 10,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 8,
+          "price": 10000
+        },
+        {
+          "materialId": "f5c4521b-83a2-4b31-abc6-95a9895c1487",
+          "name": "ONM",
+          "unit": "Botol",
+          "qty": 10,
+          "price": 2103
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:37:21.224Z",
+      "updatedAt": "2026-10-10T04:47:12.446Z"
+    },
+    {
+      "id": "0c26d1bd-73df-4a53-894c-90e196a0fe6e",
+      "code": "WM",
+      "date": "2026-10-07",
+      "shelfLifeDays": 4,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 13,
+          "price": 10000
+        },
+        {
+          "materialId": "f0543855-9bed-4fca-9efc-e32bf804469d",
+          "name": "Wili's",
+          "unit": "Botol",
+          "qty": 15,
+          "price": 2173
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:38:50.134Z",
+      "updatedAt": "2026-10-10T04:47:21.725Z"
+    },
+    {
+      "id": "f61b3abd-9cb7-4f02-8451-1434c6b41c37",
+      "code": "S5M",
+      "date": "2026-10-07",
+      "shelfLifeDays": 4,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 12,
+          "price": 10000
+        },
+        {
+          "materialId": "fc431ea1-90b4-4c91-bc90-aead56246831",
+          "name": "S5M",
+          "unit": "Botol",
+          "qty": 15,
+          "price": 2103
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:47:03.178Z"
+    },
+    {
+      "id": "73089fee-3b6c-45ee-9d77-7e41e13426da",
+      "code": "SRS",
+      "date": "2026-10-08",
+      "shelfLifeDays": 4,
+      "goodBottles": 20,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 20,
+          "price": 1307
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 18,
+          "price": 10000
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:49:06.479Z"
+    },
+    {
+      "id": "da6d3ec7-a4bb-4852-bb50-70f3f20ab50c",
+      "code": "SRS",
+      "date": "2026-10-09",
+      "shelfLifeDays": 4,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 1307
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 13,
+          "price": 10000
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:50:46.324Z"
+    },
+    {
+      "id": "6be7a134-f730-44f6-9c8f-8fbac1cd63e6",
+      "code": "SRS",
+      "date": "2026-10-10",
+      "shelfLifeDays": 4,
+      "goodBottles": 30,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 30,
+          "price": 1307
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 27,
+          "price": 10000
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:51:25.918Z"
+    },
+    {
+      "id": "52ddd12c-6d9e-44d2-8dd5-d6f0c947eaee",
+      "code": "MM",
+      "date": "2026-10-09",
+      "shelfLifeDays": 4,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 13,
+          "price": 10000
+        },
+        {
+          "materialId": "8389e873-d73a-4ca5-9313-ba454197a943",
+          "name": "MM",
+          "unit": "Botol",
+          "qty": 15,
+          "price": 2445
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T04:59:02.863Z"
+    },
+    {
+      "id": "0d68fa3c-b2c6-4da1-bee8-d227a89e00e8",
+      "code": "ONM",
+      "date": "2026-10-11",
+      "shelfLifeDays": 4,
+      "goodBottles": 10,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 9,
+          "price": 10000
+        },
+        {
+          "materialId": "f5c4521b-83a2-4b31-abc6-95a9895c1487",
+          "name": "ONM",
+          "unit": "Botol",
+          "qty": 10,
+          "price": 2103
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T07:27:19.538Z",
+      "updatedAt": "2026-10-11T03:18:39.003Z"
+    },
+    {
+      "id": "d0d6c135-fbb2-4b6b-a8e9-3b774c247b11",
+      "code": "WM",
+      "date": "2026-10-11",
+      "shelfLifeDays": 4,
+      "goodBottles": 10,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 8,
+          "price": 10000
+        },
+        {
+          "materialId": "f0543855-9bed-4fca-9efc-e32bf804469d",
+          "name": "Wili's",
+          "unit": "Botol",
+          "qty": 10,
+          "price": 2173
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T07:27:55.322Z",
+      "updatedAt": "2026-10-11T03:18:09.299Z"
+    },
+    {
+      "id": "2f9d963e-d9f6-4f8c-8f96-02b70eaad825",
+      "code": "S5M",
+      "date": "2026-10-11",
+      "shelfLifeDays": 4,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 11,
+          "price": 10000
+        },
+        {
+          "materialId": "fc431ea1-90b4-4c91-bc90-aead56246831",
+          "name": "S5M",
+          "unit": "Botol",
+          "qty": 15,
+          "price": 2103
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-10T07:28:26.197Z",
+      "updatedAt": "2026-10-11T03:14:16.645Z"
+    },
+    {
+      "id": "520f5b84-427e-4cae-b661-4d3925cf97b6",
+      "code": "SRS",
+      "date": "2026-10-11",
+      "shelfLifeDays": 4,
+      "goodBottles": 20,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 20,
+          "price": 1307
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 18,
+          "price": 10000
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-11T03:09:37.982Z",
+      "updatedAt": "2026-10-11T03:18:47.288Z"
+    },
+    {
+      "id": "c688b56f-24c0-4c8a-9157-944fc66f81bf",
+      "code": "MM",
+      "date": "2026-10-11",
+      "shelfLifeDays": 4,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 12,
+          "price": 10000
+        },
+        {
+          "materialId": "8389e873-d73a-4ca5-9313-ba454197a943",
+          "name": "MM",
+          "unit": "Botol",
+          "qty": 15,
+          "price": 2445
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-11T03:13:23.684Z",
+      "updatedAt": "2026-10-11T03:14:06.834Z"
+    },
+    {
+      "id": "6d6cb555-60d7-40f4-ae3d-d54c686b642d",
+      "code": "SRS",
+      "date": "2026-10-12",
+      "shelfLifeDays": 4,
+      "goodBottles": 20,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 20,
+          "price": 1307
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 16,
+          "price": 10000
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-13T05:50:47.250Z"
+    },
+    {
+      "id": "6eb9c659-9093-4ac1-8999-638a1dea8455",
+      "code": "ONM",
+      "date": "2026-10-13",
+      "shelfLifeDays": 4,
+      "goodBottles": 10,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 6,
+          "price": 10000
+        },
+        {
+          "materialId": "f5c4521b-83a2-4b31-abc6-95a9895c1487",
+          "name": "ONM",
+          "unit": "Botol",
+          "qty": 10,
+          "price": 2103
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-13T05:51:31.525Z"
+    },
+    {
+      "id": "db886911-9e20-47cb-9cf6-42bd92a6b680",
+      "code": "SRS",
+      "date": "2026-10-13",
+      "shelfLifeDays": 4,
+      "goodBottles": 15,
+      "rejectBottles": 0,
+      "items": [
+        {
+          "materialId": "07b7e673-e7c6-4a99-888f-d294f26a46a0",
+          "name": "Botol Kaca",
+          "unit": "pcs",
+          "qty": 15,
+          "price": 1307
+        },
+        {
+          "materialId": "e98eb67c-e0ff-4698-abdc-4e473156247c",
+          "name": "Kelapa 10k",
+          "unit": "butir",
+          "qty": 10,
+          "price": 10000
+        }
+      ],
+      "costs": [],
+      "note": "",
+      "createdAt": "2026-10-13T05:51:48.394Z"
+    }
+  ],
+  "deliveries": [
+    {
+      "id": "abead969-f4aa-4589-b50d-f4e8dbc2fedd",
+      "date": "2026-10-01",
+      "batchId": "cd2f248a-71bb-409f-9b30-8c85a4e85dd6",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 15,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:20:07.398Z"
+    },
+    {
+      "id": "b9d24f23-fa29-4ebf-a8db-9a97a004b5df",
+      "date": "2026-10-02",
+      "batchId": "8acf22b6-c672-4ed8-a66c-8b4eee062a03",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 25,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:20:21.230Z"
+    },
+    {
+      "id": "8889eb8f-3c9a-49b5-a3eb-3b7315611865",
+      "date": "2026-10-03",
+      "batchId": "285921d7-bb61-4a19-aa3b-aadadd0da27c",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 25,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:20:30.568Z"
+    },
+    {
+      "id": "619ddcf2-486c-44c5-9b07-4753581113ad",
+      "date": "2026-10-03",
+      "batchId": "0e323c4d-9814-4f0d-b393-08508e868b8c",
+      "partnerId": "7908a8f9-7ddd-436d-86bb-25a93450f49b",
+      "qty": 15,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T04:23:56.449Z"
+    },
+    {
+      "id": "1d623bc8-1161-48c8-862c-4d3feaf899b4",
+      "date": "2026-10-03",
+      "batchId": "a19342ca-f6a3-4c83-bdd2-0671846bffbd",
+      "partnerId": "404e7ebf-3b3d-489d-991f-5fddf7ab85ed",
+      "qty": 10,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T04:24:07.317Z"
+    },
+    {
+      "id": "d3bd8f5a-1847-41d2-bcc4-037acda55a70",
+      "date": "2026-10-03",
+      "batchId": "4ffe22df-5741-4228-b084-addc72f39194",
+      "partnerId": "ab275808-8c32-46f0-b3d0-d6e02b933000",
+      "qty": 15,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T04:24:16.927Z"
+    },
+    {
+      "id": "49d2e79a-91d8-4ea5-9451-f802b44fb71a",
+      "date": "2026-10-04",
+      "batchId": "4a9a908d-2e22-43f0-b766-7ca2d591047c",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 30,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:41:21.551Z"
+    },
+    {
+      "id": "90a2c85f-81ce-47b8-90ce-b508630cda09",
+      "date": "2026-10-05",
+      "batchId": "52d230ef-292e-4ec5-bd7b-c9a4b63bc078",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 25,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:41:31.975Z"
+    },
+    {
+      "id": "e721afd1-13c9-4dfb-8716-a61bd130348d",
+      "date": "2026-10-06",
+      "batchId": "521dbe34-d7b6-4a61-adda-601128f64905",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 35,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:41:49.330Z"
+    },
+    {
+      "id": "d788408c-06ce-4403-9699-c8395f1f024e",
+      "date": "2026-10-07",
+      "batchId": "7981bfce-dceb-49b1-a086-c9bf64b4e3d4",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 10,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:42:00.421Z"
+    },
+    {
+      "id": "5005a31a-664c-4b14-aca4-9bffe6704f61",
+      "date": "2026-10-06",
+      "batchId": "cf243baa-d606-42ae-b9c2-cebe3533be83",
+      "partnerId": "7908a8f9-7ddd-436d-86bb-25a93450f49b",
+      "qty": 15,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T04:42:14.789Z",
+      "updatedAt": "2026-10-10T04:46:15.910Z"
+    },
+    {
+      "id": "770f2924-c7de-4f0b-8d95-df9df3f73632",
+      "date": "2026-10-07",
+      "batchId": "a792a1a1-7c47-4e29-b8d7-d3118c70f188",
+      "partnerId": "404e7ebf-3b3d-489d-991f-5fddf7ab85ed",
+      "qty": 10,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T04:42:28.588Z"
+    },
+    {
+      "id": "db24d582-c630-48dd-99c6-74b677ad5fd1",
+      "date": "2026-10-07",
+      "batchId": "0c26d1bd-73df-4a53-894c-90e196a0fe6e",
+      "partnerId": "ab275808-8c32-46f0-b3d0-d6e02b933000",
+      "qty": 15,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T04:42:41.232Z"
+    },
+    {
+      "id": "532b343c-15e8-46fa-9334-3f360f5b1f13",
+      "date": "2026-10-07",
+      "batchId": "f61b3abd-9cb7-4f02-8451-1434c6b41c37",
+      "partnerId": "7908a8f9-7ddd-436d-86bb-25a93450f49b",
+      "qty": 15,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T04:47:45.044Z"
+    },
+    {
+      "id": "4cb9258d-62e4-49ba-9ab1-045bd3a50fa3",
+      "date": "2026-10-09",
+      "batchId": "da6d3ec7-a4bb-4852-bb50-70f3f20ab50c",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 15,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:51:40.508Z"
+    },
+    {
+      "id": "967a32c8-a3b7-4d05-8bfd-5ec7e8af9538",
+      "date": "2026-10-10",
+      "batchId": "6be7a134-f730-44f6-9c8f-8fbac1cd63e6",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 30,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:51:51.608Z"
+    },
+    {
+      "id": "34f367b0-7779-4331-b34d-da184f37cede",
+      "date": "2026-10-08",
+      "batchId": "73089fee-3b6c-45ee-9d77-7e41e13426da",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 20,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-10T04:52:27.045Z"
+    },
+    {
+      "id": "55137e33-0e83-4f3d-903d-f7295cf0178c",
+      "date": "2026-10-09",
+      "batchId": "52ddd12c-6d9e-44d2-8dd5-d6f0c947eaee",
+      "partnerId": "f15bd3a7-7161-48d7-a073-1200dac57e19",
+      "qty": 15,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T04:59:16.503Z"
+    },
+    {
+      "id": "795ce622-7423-4e38-b5e1-b5255765dfe9",
+      "date": "2026-10-11",
+      "batchId": "0d68fa3c-b2c6-4da1-bee8-d227a89e00e8",
+      "partnerId": "404e7ebf-3b3d-489d-991f-5fddf7ab85ed",
+      "qty": 10,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T07:28:47.397Z"
+    },
+    {
+      "id": "daa4204e-3e28-43f8-a022-68ad4e712357",
+      "date": "2026-10-11",
+      "batchId": "d0d6c135-fbb2-4b6b-a8e9-3b774c247b11",
+      "partnerId": "ab275808-8c32-46f0-b3d0-d6e02b933000",
+      "qty": 10,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T07:28:58.256Z",
+      "updatedAt": "2026-10-11T03:16:51.027Z"
+    },
+    {
+      "id": "a3db0270-b6e5-4d99-9824-1d0e56623d02",
+      "date": "2026-10-11",
+      "batchId": "2f9d963e-d9f6-4f8c-8f96-02b70eaad825",
+      "partnerId": "7908a8f9-7ddd-436d-86bb-25a93450f49b",
+      "qty": 15,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-10T07:29:17.757Z"
+    },
+    {
+      "id": "d0a2761c-d1b5-4aaa-af46-c2b88c59add2",
+      "date": "2026-10-11",
+      "batchId": "520f5b84-427e-4cae-b661-4d3925cf97b6",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 20,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-11T03:09:47.986Z"
+    },
+    {
+      "id": "9d30f479-fd9b-42f4-966f-419293f28afc",
+      "date": "2026-10-11",
+      "batchId": "c688b56f-24c0-4c8a-9157-944fc66f81bf",
+      "partnerId": "f15bd3a7-7161-48d7-a073-1200dac57e19",
+      "qty": 15,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-11T03:14:30.923Z"
+    },
+    {
+      "id": "7fe36e6a-7627-47c1-9f05-7d41aae9cd45",
+      "date": "2026-10-13",
+      "batchId": "db886911-9e20-47cb-9cf6-42bd92a6b680",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 15,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-13T05:51:59.887Z"
+    },
+    {
+      "id": "3705b5cc-1eb8-4e53-8e06-4854effb45ba",
+      "date": "2026-10-13",
+      "batchId": "6eb9c659-9093-4ac1-8999-638a1dea8455",
+      "partnerId": "404e7ebf-3b3d-489d-991f-5fddf7ab85ed",
+      "qty": 10,
+      "price": 18000,
+      "note": "",
+      "createdAt": "2026-10-13T05:52:10.413Z"
+    },
+    {
+      "id": "b73fddb1-c321-44fb-9b0d-88cc5dfb7d32",
+      "date": "2026-10-12",
+      "batchId": "6d6cb555-60d7-40f4-ae3d-d54c686b642d",
+      "partnerId": "91fe941f-68d1-47f6-a00c-88e9e399ede7",
+      "qty": 20,
+      "price": 20000,
+      "note": "",
+      "createdAt": "2026-10-13T05:52:21.097Z"
+    }
+  ],
+  "sales": [
+    {
+      "id": "4b2c033f-fbd4-4509-a2df-cbd1999f9c70",
+      "date": "2026-10-01",
+      "deliveryId": "abead969-f4aa-4589-b50d-f4e8dbc2fedd",
+      "qty": 15,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:24:31.109Z"
+    },
+    {
+      "id": "069a8c94-3971-4449-8211-c2093a62e2b3",
+      "date": "2026-10-02",
+      "deliveryId": "8889eb8f-3c9a-49b5-a3eb-3b7315611865",
+      "qty": 25,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:24:42.661Z"
+    },
+    {
+      "id": "3c6de5d8-0374-4fb7-aeee-ccb8f238605c",
+      "date": "2026-10-03",
+      "deliveryId": "b9d24f23-fa29-4ebf-a8db-9a97a004b5df",
+      "qty": 25,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:24:51.684Z"
+    },
+    {
+      "id": "a0226f81-0f2b-483a-8810-aaa2348b1fe3",
+      "date": "2026-10-03",
+      "deliveryId": "1d623bc8-1161-48c8-862c-4d3feaf899b4",
+      "qty": 9,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-10T04:25:05.785Z"
+    },
+    {
+      "id": "feb69e45-acc8-4960-90b2-42d0111a19d1",
+      "date": "2026-10-03",
+      "deliveryId": "619ddcf2-486c-44c5-9b07-4753581113ad",
+      "qty": 15,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-10T04:25:14.083Z"
+    },
+    {
+      "id": "ea8a06bf-de61-46ad-b96b-a6b7c84858b6",
+      "date": "2026-10-03",
+      "deliveryId": "d3bd8f5a-1847-41d2-bcc4-037acda55a70",
+      "qty": 6,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-10T04:25:24.752Z"
+    },
+    {
+      "id": "243718e5-e1da-4ac0-803d-7f6f40fb66d6",
+      "date": "2026-10-04",
+      "deliveryId": "49d2e79a-91d8-4ea5-9451-f802b44fb71a",
+      "qty": 30,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:42:58.068Z"
+    },
+    {
+      "id": "f2aa06c0-465d-4f68-a5b5-0dce2f93a198",
+      "date": "2026-10-05",
+      "deliveryId": "90a2c85f-81ce-47b8-90ce-b508630cda09",
+      "qty": 25,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:44:34.350Z"
+    },
+    {
+      "id": "274e5ea7-da3d-4dcb-984a-ba0e1c9ca488",
+      "date": "2026-10-06",
+      "deliveryId": "e721afd1-13c9-4dfb-8716-a61bd130348d",
+      "qty": 35,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:44:48.374Z"
+    },
+    {
+      "id": "4e80b2e5-c3bc-43c2-86b5-d7c494662130",
+      "date": "2026-10-07",
+      "deliveryId": "d788408c-06ce-4403-9699-c8395f1f024e",
+      "qty": 10,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:44:59.333Z"
+    },
+    {
+      "id": "4670c380-fd4d-4aea-9c7c-9d4040e2faed",
+      "date": "2026-10-08",
+      "deliveryId": "34f367b0-7779-4331-b34d-da184f37cede",
+      "qty": 20,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:53:28.838Z"
+    },
+    {
+      "id": "1d3b9c26-3f83-46d9-9c8e-e3a8d50380b5",
+      "date": "2026-10-09",
+      "deliveryId": "4cb9258d-62e4-49ba-9ab1-045bd3a50fa3",
+      "qty": 15,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:53:37.990Z"
+    },
+    {
+      "id": "1d019964-0a00-4f6a-9180-5d52ec198708",
+      "date": "2026-10-10",
+      "deliveryId": "967a32c8-a3b7-4d05-8bfd-5ec7e8af9538",
+      "qty": 30,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-10T04:53:47.176Z"
+    },
+    {
+      "id": "61d992d0-3a94-490c-8ed1-55cb64810375",
+      "date": "2026-10-06",
+      "deliveryId": "5005a31a-664c-4b14-aca4-9bffe6704f61",
+      "qty": 15,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-10T04:57:17.036Z",
+      "updatedAt": "2026-10-10T05:00:08.193Z"
+    },
+    {
+      "id": "66bc177f-d71d-4b31-9a1e-f252ad9401b4",
+      "date": "2026-10-11",
+      "deliveryId": "d0a2761c-d1b5-4aaa-af46-c2b88c59add2",
+      "qty": 20,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-11T03:10:02.197Z"
+    },
+    {
+      "id": "b0b77d09-073c-4176-9fa4-253449cbecae",
+      "date": "2026-10-07",
+      "deliveryId": "770f2924-c7de-4f0b-8d95-df9df3f73632",
+      "qty": 10,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-13T05:46:59.851Z"
+    },
+    {
+      "id": "5287db43-0aca-4c50-98e1-c723759ccbea",
+      "date": "2026-10-07",
+      "deliveryId": "db24d582-c630-48dd-99c6-74b677ad5fd1",
+      "qty": 9,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-13T05:47:14.204Z"
+    },
+    {
+      "id": "2d4d15d5-55f1-4406-938c-b077edc2d8c7",
+      "date": "2026-10-07",
+      "deliveryId": "532b343c-15e8-46fa-9334-3f360f5b1f13",
+      "qty": 15,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-13T05:47:26.105Z"
+    },
+    {
+      "id": "9562209b-5ca5-4a5e-8eaf-74244ef3883e",
+      "date": "2026-10-11",
+      "deliveryId": "55137e33-0e83-4f3d-903d-f7295cf0178c",
+      "qty": 10,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-13T05:48:49.274Z"
+    },
+    {
+      "id": "c47617c4-4f9d-452f-9333-76ae1544b505",
+      "date": "2026-10-13",
+      "deliveryId": "795ce622-7423-4e38-b5e1-b5255765dfe9",
+      "qty": 10,
+      "price": 18000,
+      "paid": true,
+      "note": "",
+      "createdAt": "2026-10-13T05:49:08.899Z"
+    },
+    {
+      "id": "36c83aa5-1c9e-4e6f-876b-6331594112e3",
+      "date": "2026-10-12",
+      "deliveryId": "b73fddb1-c321-44fb-9b0d-88cc5dfb7d32",
+      "qty": 20,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-13T05:52:35.515Z"
+    },
+    {
+      "id": "13f3685a-bc74-4634-8da1-934a848867eb",
+      "date": "2026-10-13",
+      "deliveryId": "7fe36e6a-7627-47c1-9f05-7d41aae9cd45",
+      "qty": 15,
+      "price": 20000,
+      "paid": false,
+      "note": "",
+      "createdAt": "2026-10-13T05:52:51.752Z"
+    }
+  ],
+  "returns": [
+    {
+      "id": "167407e6-43fd-4b70-83ca-cbf93535d687",
+      "date": "2026-10-03",
+      "deliveryId": "d3bd8f5a-1847-41d2-bcc4-037acda55a70",
+      "qty": 9,
+      "condition": "rusak",
+      "reason": "Tidak laku",
+      "note": "",
+      "createdAt": "2026-10-10T04:25:45.468Z"
+    },
+    {
+      "id": "5239e77d-c4c1-4250-9859-d90a14242f95",
+      "date": "2026-10-03",
+      "deliveryId": "1d623bc8-1161-48c8-862c-4d3feaf899b4",
+      "qty": 1,
+      "condition": "rusak",
+      "reason": "Tidak laku",
+      "note": "",
+      "createdAt": "2026-10-10T04:26:10.797Z"
+    },
+    {
+      "id": "ad78196b-e711-4218-b044-1edc4593a747",
+      "date": "2026-10-11",
+      "deliveryId": "db24d582-c630-48dd-99c6-74b677ad5fd1",
+      "qty": 6,
+      "condition": "rusak",
+      "reason": "Tidak laku",
+      "note": "",
+      "createdAt": "2026-10-13T05:48:27.341Z"
+    },
+    {
+      "id": "babf07a5-f03e-4485-9542-3d7634b3c01d",
+      "date": "2026-10-11",
+      "deliveryId": "55137e33-0e83-4f3d-903d-f7295cf0178c",
+      "qty": 5,
+      "condition": "rusak",
+      "reason": "Tidak laku",
+      "note": "",
+      "createdAt": "2026-10-13T05:49:21.919Z"
+    }
+  ],
+  "expirations": [],
+  "expenses": [
+    {
+      "id": "00541e85-e495-4b4b-ab9a-4e5dcedc2955",
+      "date": "2026-10-01",
+      "category": "AIR",
+      "description": "Bayar Air",
+      "amount": 100000,
+      "note": "",
+      "createdAt": "2026-10-10T04:56:42.196Z"
+    }
+  ]
+}
