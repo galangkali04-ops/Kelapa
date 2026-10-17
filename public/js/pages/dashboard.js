@@ -1,8 +1,10 @@
 // Ringkasan: laporan laba, angka botol, pengeluaran per kategori, per mitra, per batch, grafik.
-import { h, rp, int, pct, fmtDate, dataTable, pageHeader, trendChart } from '../ui.js';
+import { h, rp, int, pct, fmtDate, dataTable, pageHeader, trendChart, openDialog, closeDialog } from '../ui.js';
 import { api } from '../api.js';
+import { openResultForm } from './result.js';
 
 const range = { preset: 'month', from: '', to: '' };
+let reportOpen = false; // laporan keuangan disembunyikan dulu supaya Ringkasan tetap simpel
 const iso = (d) => d.toLocaleDateString('sv-SE');
 
 function presetDates(p) {
@@ -16,6 +18,54 @@ function presetDates(p) {
 
 const stat = (value, label, bad) => h('div', { class: `stat${bad ? ' bad' : ''}` }, h('div', { class: 'v' }, value), h('div', { class: 'l' }, label));
 const ledgerRow = (label, value, cls = '') => h('div', { class: `ledger-row ${cls}` }, h('span', {}, label), h('span', {}, value));
+
+/* ---------- Detail satu mitra: tanggal kirim + hasilnya ---------- */
+function openPartner(partnerId, ctx) {
+  const p = (ctx.data.partners || []).find((x) => x.id === partnerId);
+  if (!p) return;
+  const dels = (ctx.data.deliveries || []).filter((d) => d.partnerId === p.id)
+    .sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''));
+  const total = (f) => dels.reduce((s, d) => s + (Number(d[f]) || 0), 0);
+  const box = (value, label) => h('div', {}, h('b', {}, value), h('span', {}, label));
+
+  const history = (d) => {
+    const lines = [
+      ...(ctx.data.sales || []).filter((x) => x.deliveryId === d.id).map((x) => ({
+        date: x.date, at: x.createdAt, text: `Terjual ${int(x.qty)} botol · ${rp(x.total)}`, badge: x.paid ? ['Lunas', ''] : ['Belum dibayar', 'warn'] })),
+      ...(ctx.data.returns || []).filter((x) => x.deliveryId === d.id).map((x) => ({
+        date: x.date, at: x.createdAt, text: `Kembali ${int(x.qty)} botol${x.reason ? ` (${x.reason})` : ''}`, badge: x.condition === 'rusak' ? ['Tidak layak', 'bad'] : ['Layak', ''] })),
+      ...(ctx.data.expirations || []).filter((x) => x.deliveryId === d.id).map((x) => ({
+        date: x.date, at: x.createdAt, text: `Expired ${int(x.qty)} botol`, badge: ['Rugi', 'bad'] })),
+    ].sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.at || '').localeCompare(b.at || ''));
+    if (!lines.length) return h('p', { class: 'muted dlv-empty' }, 'Belum ada hasil yang dicatat.');
+    return h('ul', { class: 'dlv-history' }, lines.map((l) => h('li', {},
+      h('span', { class: 'when' }, fmtDate(l.date)), h('span', { class: 'what' }, l.text), h('span', { class: `badge ${l.badge[1]}` }, l.badge[0]))));
+  };
+
+  const card = (d) => h('article', { class: 'dlv' },
+    h('div', { class: 'dlv-top' },
+      h('strong', {}, `Dikirim ${fmtDate(d.date)}`),
+      d.remaining > 0 ? h('span', { class: 'badge warn' }, `Sisa ${int(d.remaining)} botol`) : h('span', { class: 'badge muted' }, 'Selesai')),
+    h('p', { class: 'muted dlv-meta' }, `Batch ${d.batchCode} · ${int(d.qty)} botol · ${rp(d.price)} per botol`),
+    h('div', { class: 'dlv-nums' },
+      h('div', {}, h('b', {}, int(d.sold)), h('span', {}, 'Terjual')),
+      h('div', {}, h('b', {}, int(d.returned)), h('span', {}, 'Kembali')),
+      h('div', {}, h('b', {}, int(d.expired)), h('span', {}, 'Expired')),
+      h('div', {}, h('b', {}, rp(d.revenue)), h('span', {}, 'Revenue'))),
+    history(d),
+    d.remaining > 0 ? h('button', { type: 'button', class: 'btn small primary', onclick: () => openResultForm(d, ctx, () => openPartner(p.id, ctx)) }, 'Catat hasil') : null);
+
+  openDialog(h('div', { class: 'dialog-body wide' },
+    h('h2', {}, p.name),
+    h('p', { class: 'muted', style: 'margin-bottom:14px' }, [p.type, p.scheme === 'putus' ? 'Beli putus' : 'Titip jual', p.contact].filter(Boolean).join(' · ')),
+    h('div', { class: 'detail-grid' },
+      box(int(total('qty')), 'Total dikirim'), box(int(total('sold')), 'Terjual'), box(int(total('returned')), 'Kembali'),
+      box(int(total('remaining')), 'Sisa di mitra'), box(rp(total('revenue')), 'Revenue'),
+      total('unpaid') > 0 ? box(rp(total('unpaid')), 'Belum dibayar') : null),
+    h('h3', { class: 'dlv-title' }, 'Riwayat pengiriman'),
+    dels.length ? dels.map(card) : h('p', { class: 'empty' }, 'Belum ada pengiriman ke mitra ini.'),
+    h('div', { class: 'form-actions' }, h('button', { type: 'button', class: 'btn', onclick: closeDialog }, 'Tutup'))));
+}
 
 export async function renderDashboard(root, page, ctx) {
   const dates = presetDates(range.preset);
@@ -88,16 +138,31 @@ export async function renderDashboard(root, page, ctx) {
     { key: 'stockTotal', label: 'Sisa stok', type: 'int' }, { key: 'revenue', label: 'Revenue', type: 'rp' }, { key: 'grossProfit', label: 'Gross profit', type: 'rp' },
   ];
 
+  const partners = ctx.data.partners || [];
+  const partnerPanel = h('section', { class: 'panel' },
+    h('h2', {}, 'Mitra'),
+    partners.length
+      ? h('div', { class: 'partner-list' }, partners.map((p) => h('button', { type: 'button', class: 'partner-row', onclick: () => openPartner(p.id, ctx) },
+        h('span', { class: 'nm' }, p.name),
+        p.remaining > 0 ? h('span', { class: 'badge warn' }, `Sisa ${int(p.remaining)}`) : null,
+        h('span', { class: 'chev', 'aria-hidden': 'true' }, '›'))))
+      : h('p', { class: 'empty' }, 'Belum ada mitra. Tambahkan dulu di menu Mitra.'));
+
+  const report = h('details', { class: 'report-box', open: reportOpen, ontoggle: (e) => { reportOpen = e.target.open; } },
+    h('summary', {}, 'Laporan keuangan & statistik'),
+    h('div', { class: 'report-inner' },
+      h('p', { class: 'muted' }, 'Angka di bawah mengikuti periode yang dipilih.'), filters, ledger, stats,
+      h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Pengeluaran per kategori'), h('p', { class: 'muted' }, 'Dicatat di menu Biaya pengeluaran.')),
+        dataTable(categoryCols, rep.perCategory, { emptyText: 'Belum ada pengeluaran pada periode ini.' })),
+      h('section', { class: 'panel' }, h('h2', {}, 'Revenue dan gross profit per hari'),
+        rep.trend.length ? [trendChart(rep.trend), h('div', { class: 'legend' }, h('span', {}, h('i', { style: 'background:var(--water)' }), 'Revenue'), h('span', {}, h('i', { style: 'background:var(--husk)' }), 'Gross profit'))]
+          : h('p', { class: 'empty' }, 'Belum ada penjualan pada periode ini.')),
+      h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Per mitra')),
+        dataTable(partnerCols, rep.perPartner, { emptyText: 'Belum ada aktivitas mitra pada periode ini.' })),
+      h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Per batch'), h('p', { class: 'muted' }, 'Batch yang diproduksi pada periode ini, dengan angka penjualan sepanjang batch tersebut.')),
+        dataTable(batchCols, rep.perBatch, { emptyText: 'Belum ada batch pada periode ini.' }))));
+
   root.replaceChildren(
-    pageHeader(`Ringkasan ${ctx.settings.businessName || ''}`.trim(), 'Angka di bawah mengikuti periode yang dipilih.', filters),
-    ...(alerts ? [alerts] : []), ledger, stats,
-    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Pengeluaran per kategori'), h('p', { class: 'muted' }, 'Dicatat di menu Biaya pengeluaran.')),
-      dataTable(categoryCols, rep.perCategory, { emptyText: 'Belum ada pengeluaran pada periode ini.' })),
-    h('section', { class: 'panel' }, h('h2', {}, 'Revenue dan gross profit per hari'),
-      rep.trend.length ? [trendChart(rep.trend), h('div', { class: 'legend' }, h('span', {}, h('i', { style: 'background:var(--water)' }), 'Revenue'), h('span', {}, h('i', { style: 'background:var(--husk)' }), 'Gross profit'))]
-        : h('p', { class: 'empty' }, 'Belum ada penjualan pada periode ini.')),
-    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Per mitra')),
-      dataTable(partnerCols, rep.perPartner, { emptyText: 'Belum ada aktivitas mitra pada periode ini.' })),
-    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Per batch'), h('p', { class: 'muted' }, 'Batch yang diproduksi pada periode ini, dengan angka penjualan sepanjang batch tersebut.')),
-      dataTable(batchCols, rep.perBatch, { emptyText: 'Belum ada batch pada periode ini.' })));
+    pageHeader(`Ringkasan ${ctx.settings.businessName || ''}`.trim(), 'Pilih nama mitra untuk melihat tanggal pengiriman dan hasilnya.'),
+    ...(alerts ? [alerts] : []), partnerPanel, report);
 }
