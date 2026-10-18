@@ -31,12 +31,12 @@ export const daysBetween = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) 
 
 /* ---------- Toast ---------- */
 let toastTimer;
-export function toast(message, kind = '') {
+export function toast(message, kind = '', ms = 3200) {
   const el = document.getElementById('toast');
   el.textContent = message;
   el.className = `show ${kind}`;
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { el.className = ''; }, 3200);
+  toastTimer = setTimeout(() => { el.className = ''; }, ms);
 }
 
 /* ---------- Dialog ---------- */
@@ -135,8 +135,13 @@ export function buildFields(fields, values, ctx) {
   const node = h('div', { class: 'fields' });
   const inputs = {};
   const getters = {};
+  const wrappers = {};
   for (const f of fields) {
     const id = `f_${f.key}`;
+    if (f.type === 'heading') {
+      node.append(h('div', { class: 'field full fields-heading' }, h('h3', {}, f.label), f.help ? h('p', { class: 'muted' }, f.help) : null));
+      continue;
+    }
     if (f.type === 'lines') {
       const widget = linesWidget(f, values[f.key] ?? f.default, ctx);
       getters[f.key] = widget.get;
@@ -163,7 +168,7 @@ export function buildFields(fields, values, ctx) {
       const numeric = ['number', 'money', 'int'].includes(f.type);
       input = h('input', {
         id, name: f.key, required: !!f.required, placeholder: f.placeholder,
-        type: numeric ? 'number' : f.type === 'date' ? 'date' : f.type === 'month' ? 'month' : 'text',
+        type: numeric ? 'number' : f.type === 'date' ? 'date' : f.type === 'month' ? 'month' : f.type === 'time' ? 'time' : 'text',
         step: f.type === 'int' ? '1' : numeric ? 'any' : null,
         min: numeric ? '0' : null, inputmode: numeric ? 'decimal' : null,
         list: f.suggest ? `dl_${f.key}` : null, autocomplete: 'off',
@@ -175,9 +180,25 @@ export function buildFields(fields, values, ctx) {
       }
     }
     inputs[f.key] = input;
-    node.append(h('div', { class: `field${f.full || f.type === 'textarea' ? ' full' : ''}${f.type === 'checkbox' ? ' check' : ''}` },
-      h('label', { for: id }, f.label), input, extra, f.help ? h('span', { class: 'help' }, f.help) : null));
+    const wrap = h('div', { class: `field${f.full || f.type === 'textarea' ? ' full' : ''}${f.type === 'checkbox' ? ' check' : ''}` },
+      h('label', { for: id }, f.label), input, extra, f.help ? h('span', { class: 'help' }, f.help) : null);
+    wrappers[f.key] = wrap;
+    node.append(wrap);
   }
+  // Tampilkan isian hanya jika isian lain bernilai tertentu: showIf: { field, in: ['nilai'] }.
+  // Checkbox bernilai 'true' atau 'false'. Isian yang disembunyikan tidak ikut diwajibkan.
+  const valueOf = (el) => (el.type === 'checkbox' ? String(el.checked) : el.value);
+  const applyVisibility = () => {
+    for (const f of fields) {
+      if (!f.showIf || !wrappers[f.key]) continue;
+      const src = f.showIf.field;
+      const visible = !(wrappers[src] && wrappers[src].hidden) && !!inputs[src] && f.showIf.in.includes(valueOf(inputs[src]));
+      wrappers[f.key].hidden = !visible;
+      if (f.required) inputs[f.key].required = visible;
+    }
+  };
+  for (const f of fields) if (f.showIf && inputs[f.showIf.field]) inputs[f.showIf.field].addEventListener('change', applyVisibility);
+  applyVisibility();
   // Isi otomatis dari field lain (mis. harga dari mitra yang dipilih).
   for (const f of fields) {
     if (!f.defaultFrom || !inputs[f.key]) continue;
@@ -193,6 +214,7 @@ export function buildFields(fields, values, ctx) {
   const getValues = () => {
     const out = {};
     for (const f of fields) {
+      if (f.type === 'heading') continue;
       if (getters[f.key]) { out[f.key] = getters[f.key](); continue; }
       const el = inputs[f.key];
       if (f.type === 'checkbox') out[f.key] = el.checked;
@@ -204,9 +226,16 @@ export function buildFields(fields, values, ctx) {
   return { node, inputs, getValues };
 }
 
-export function formDialog({ title, fields, values = {}, ctx, submitLabel, onSubmit }) {
+export function formDialog({ title, fields, values = {}, ctx, submitLabel, onSubmit, preview }) {
   const { node, getValues } = buildFields(fields, values, ctx);
-  formShell({ title, children: node, submitLabel, onSubmit: () => onSubmit(getValues()) });
+  let children = node;
+  if (preview) { // teks hitungan langsung di bawah isian, mis. harga per botol dari bal
+    const bar = h('div', { class: 'preview' });
+    const update = () => { bar.textContent = preview(getValues(), ctx); };
+    node.addEventListener('input', update); node.addEventListener('change', update); update();
+    children = h('div', {}, node, bar);
+  }
+  formShell({ title, children, submitLabel, onSubmit: () => onSubmit(getValues()) });
 }
 
 /* ---------- Tabel ---------- */
@@ -225,15 +254,12 @@ function cell(c, r) {
   }
 }
 
-export function dataTable(columns, rows, { actions, emptyText = 'Belum ada data.', stack = false, onRowClick } = {}) {
+export function dataTable(columns, rows, { actions, emptyText = 'Belum ada data.', stack = false } = {}) {
   if (!rows.length) return h('p', { class: 'empty' }, emptyText);
   const cls = (c) => (numericTypes.includes(c.type) ? 'num' : '');
   return h('div', { class: 'table-wrap' }, h('table', { class: stack ? 'stack' : null },
     h('thead', {}, h('tr', {}, columns.map((c) => h('th', { class: cls(c) }, c.label)), actions ? h('th', {}) : null)),
-    h('tbody', {}, rows.map((r) => h('tr', {
-      class: onRowClick ? 'clickable' : null,
-      onclick: onRowClick ? (e) => { if (!e.target.closest('.actions')) onRowClick(r); } : null,
-    },
+    h('tbody', {}, rows.map((r) => h('tr', {},
       columns.map((c) => h('td', { class: cls(c), 'data-label': c.label }, cell(c, r))),
       actions ? h('td', { class: 'actions' }, actions(r)) : null)))));
 }

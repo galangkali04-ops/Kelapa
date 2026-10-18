@@ -41,6 +41,8 @@ export function renderBatches(root, page, ctx) {
         h('button', { class: 'btn small danger', onclick: () => remove(b) }, 'Hapus'),
       ],
     })));
+
+  if (ctx.params && ctx.params.has('add')) { history.replaceState(null, '', `#/${page.id}`); openBatchForm(null, ctx); }
 }
 
 function showDetail(b) {
@@ -76,7 +78,7 @@ function openBatchForm(batch, ctx) {
   // Batch baru: semua bahan langsung muncul sebagai baris, tinggal isi jumlah.
   const items = isEdit
     ? batch.items.map((i) => ({ ...i }))
-    : ctx.data.materials.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: m.price }));
+    : ctx.data.materials.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: m.tracked ? m.avgCost : m.price }));
   const costs = isEdit ? batch.costs.map((c) => ({ ...c })) : [];
 
   const itemsBox = h('div'); const costsBox = h('div');
@@ -105,13 +107,22 @@ function openBatchForm(batch, ctx) {
       sel.value = row.materialId;
       const sub = h('span', { class: 'sub' });
       const refreshSub = () => { sub.textContent = rp((Number(row.qty) || 0) * (Number(row.price) || 0)); update(); };
+      const mat = () => ctx.data.materials.find((x) => x.id === row.materialId);
       const price = numInput(row.price, (v) => { row.price = v; refreshSub(); }, 'Harga');
+      // Bahan yang belanjanya sudah dicatat memakai harga rata-rata stok, tidak perlu diketik.
+      const syncTracked = () => {
+        const m = mat();
+        price.disabled = !!(m && m.tracked);
+        price.title = price.disabled ? 'Otomatis dari harga rata-rata stok' : '';
+        if (m && m.tracked) { row.price = m.avgCost; price.value = m.avgCost; }
+      };
       sel.addEventListener('change', () => {
         const m = ctx.data.materials.find((x) => x.id === sel.value);
-        if (m) { Object.assign(row, { materialId: m.id, name: m.name, unit: m.unit, price: m.price }); price.value = m.price; refreshSub(); }
+        if (m) { Object.assign(row, { materialId: m.id, name: m.name, unit: m.unit, price: m.tracked ? m.avgCost : m.price }); price.value = row.price; syncTracked(); refreshSub(); }
       });
+      syncTracked();
       refreshSub();
-      itemsBox.append(h('div', { class: 'line' }, sel, numInput(row.qty, (v) => { row.qty = v; refreshSub(); }, row.unit || 'Jumlah'), price, sub,
+      itemsBox.append(h('div', { class: 'line' }, sel, numInput(row.qty, (v) => { row.qty = v; refreshSub(); }, mat() && mat().tracked ? `stok ${mat().stockQty}` : (row.unit || 'Jumlah')), price, sub,
         h('button', { type: 'button', class: 'btn small', 'aria-label': 'Hapus baris', onclick: () => { items.splice(idx, 1); drawItems(); } }, '✕')));
     });
   }
@@ -131,7 +142,7 @@ function openBatchForm(batch, ctx) {
   const content = h('div', {},
     top,
     h('div', { class: 'lines' }, h('h3', {}, 'Bahan yang dipakai'), itemsBox,
-      h('button', { type: 'button', class: 'btn small', onclick: () => { const m = ctx.data.materials[0]; items.push({ materialId: m ? m.id : '', name: m ? m.name : '', unit: m ? m.unit : '', qty: '', price: m ? m.price : 0 }); drawItems(); } }, 'Tambah bahan')),
+      h('button', { type: 'button', class: 'btn small', onclick: () => { const m = ctx.data.materials[0]; items.push({ materialId: m ? m.id : '', name: m ? m.name : '', unit: m ? m.unit : '', qty: '', price: m ? (m.tracked ? m.avgCost : m.price) : 0 }); drawItems(); } }, 'Tambah bahan')),
     h('div', { class: 'lines' }, h('h3', {}, 'Biaya lain (tenaga kerja, gas, ongkir, dll)'), costsBox,
       h('datalist', { id: 'dl_costs' }, COST_SUGGESTIONS.map((s) => h('option', { value: s }))),
       h('button', { type: 'button', class: 'btn small', onclick: () => { costs.push({ name: '', amount: '' }); drawCosts(); } }, 'Tambah biaya')),

@@ -5,21 +5,29 @@ const path = require('path');
 const crypto = require('crypto');
 
 const FILE = process.env.DATA_FILE || path.join(__dirname, '..', 'data', 'db.json');
-const COLLECTIONS = ['materials', 'partners', 'batches', 'deliveries', 'sales', 'returns', 'expirations', 'expenses'];
+const COLLECTIONS = ['materials', 'partners', 'batches', 'deliveries', 'sales', 'returns', 'expirations', 'expenses', 'reminders', 'purchases', 'stockouts', 'capital'];
 
 function defaults() {
   const mat = (name, unit) => ({ id: crypto.randomUUID(), name, unit, price: 0, note: '', createdAt: new Date().toISOString() });
   return {
     settings: {
-      businessName: 'Dewa Fresh Coco',
+      businessName: 'Air Kelapa Saya',
       codePrefix: 'KLP',
       shelfLifeDays: 3,
-      partnerTypes: 'Mart, Kafe, Reseller, Restoran, Gym, Langsung',
+      partnerTypes: 'Mart, Kafe, Reseller, Langsung',
       returnReasons: 'Tidak laku, Kemasan rusak, Mendekati expired',
       expenseCategories: 'Sampah, Gaji staff, Beli botol kaca, Listrik & gas, Transport / bensin, Perawatan alat, Pengeluaran tak terduga, Lainnya',
+      notifEnabled: true,
+      notifExpiry: true,
+      notifExpiryDays: 2,
+      notifUnpaid: true,
+      notifUnpaidDays: 3,
+      notifQuiet: false,
+      notifQuietFrom: '21:00',
+      notifQuietTo: '05:00',
     },
     materials: [mat('Kelapa', 'butir'), mat('Botol', 'pcs'), mat('Tutup botol', 'pcs'), mat('Label / stiker', 'pcs')],
-    partners: [], batches: [], deliveries: [], sales: [], returns: [], expirations: [], expenses: [],
+    partners: [], batches: [], deliveries: [], sales: [], returns: [], expirations: [], expenses: [], reminders: [], purchases: [], stockouts: [], capital: [],
   };
 }
 

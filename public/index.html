@@ -7,6 +7,8 @@
   <meta name="theme-color" content="#12352f">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/icon-180.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
@@ -15,7 +17,13 @@
 <body>
   <div class="app">
     <aside class="sidebar">
-      <div class="brand" id="brand">Air Kelapa</div>
+      <div class="brand-row">
+        <div class="brand" id="brand">Air Kelapa</div>
+        <button class="bell" id="bell" type="button" aria-label="Notifikasi">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          <span class="bell-count" id="bellCount" hidden></span>
+        </button>
+      </div>
       <nav id="nav" aria-label="Menu utama"></nav>
     </aside>
     <main id="view" tabindex="-1" aria-live="polite"></main>

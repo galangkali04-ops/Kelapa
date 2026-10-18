@@ -1,5 +1,5 @@
 // Komunikasi dengan server. Daftar koleksi harus sama dengan server/db.js.
-export const COLLECTIONS = ['materials', 'partners', 'batches', 'deliveries', 'sales', 'returns', 'expirations', 'expenses'];
+export const COLLECTIONS = ['materials', 'partners', 'batches', 'deliveries', 'sales', 'returns', 'expirations', 'expenses', 'reminders', 'purchases', 'stockouts', 'capital'];
 
 export async function api(path, { method = 'GET', body } = {}) {
   const res = await fetch('/api' + path, {

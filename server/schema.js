@@ -65,6 +65,42 @@ const schemas = {
     amount: { t: 'num0', req: true, label: 'Nominal' },
     note: { t: 'str', label: 'Catatan' },
   },
+  purchases: {
+    date: { t: 'date', label: 'Tanggal' },
+    materialId: { t: 'ref', req: true, label: 'Bahan' },
+    qty: { t: 'pos', label: 'Jumlah dibeli' },
+    damaged: { t: 'num0', label: 'Rusak / penyok' },
+    total: { t: 'num0', req: true, label: 'Total bayar' },
+    note: { t: 'str', label: 'Catatan' },
+  },
+  stockouts: {
+    date: { t: 'date', label: 'Tanggal' },
+    materialId: { t: 'ref', req: true, label: 'Bahan' },
+    qty: { t: 'pos', label: 'Jumlah' },
+    reason: { t: 'str', label: 'Alasan' },
+    note: { t: 'str', label: 'Catatan' },
+  },
+  capital: {
+    date: { t: 'date', label: 'Tanggal' },
+    type: { t: 'enum', values: ['setor', 'tarik'], label: 'Jenis' },
+    amount: { t: 'num0', req: true, label: 'Nominal' },
+    note: { t: 'str', label: 'Catatan' },
+  },
+  reminders: {
+    title: { t: 'str', req: true, label: 'Judul' },
+    message: { t: 'str', label: 'Pesan' },
+    time: { t: 'time', req: true, label: 'Jam' },
+    repeat: { t: 'enum', values: ['once', 'daily', 'weekdays', 'weekly'], label: 'Ulangi' },
+    date: { t: 'date0', label: 'Tanggal' },
+    weekday: { t: 'enum', values: ['1', '2', '3', '4', '5', '6', '0'], label: 'Hari' },
+    active: { t: 'bool' },
+  },
+};
+
+// Aturan tambahan yang butuh lebih dari satu field. Mengembalikan teks error atau null.
+const validators = {
+  purchases: (v) => (v.damaged >= v.qty ? 'Jumlah rusak harus lebih kecil dari jumlah dibeli.' : null),
+  reminders: (v) => (v.repeat === 'once' && !v.date ? 'Tanggal wajib diisi untuk pengingat sekali saja.' : null),
 };
 
 const isSimple = (v) => ['string', 'number', 'boolean'].includes(typeof v);
@@ -96,6 +132,18 @@ function sanitize(col, body) {
       case 'date':
         v = String(v || '');
         if (!/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(v))) return { error: `${label} tidak valid.` };
+        break;
+      case 'pos':
+        v = Number(v);
+        if (!Number.isFinite(v) || v <= 0) return { error: `${label} harus lebih dari 0.` };
+        break;
+      case 'date0':
+        v = v == null ? '' : String(v);
+        if (v && (!/^\d{4}-\d{2}-\d{2}$/.test(v) || Number.isNaN(Date.parse(v)))) return { error: `${label} tidak valid.` };
+        break;
+      case 'time':
+        v = v == null ? '' : String(v);
+        if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(v)) return { error: `${label} tidak valid (format 24 jam, mis. 07:30).` };
         break;
       case 'bool':
         v = v === true || v === 'true' || v === 'on';
@@ -137,4 +185,4 @@ function sanitize(col, body) {
   return { value: out };
 }
 
-module.exports = { schemas, sanitize, isSimple };
+module.exports = { schemas, sanitize, isSimple, validators };
