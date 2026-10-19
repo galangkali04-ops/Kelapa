@@ -58,6 +58,8 @@ Menu mengikuti urutan kerja: **Beranda, Belanja, Produksi, Mart, Pengeluaran, La
 | Botol di gudang kedaluwarsa | **Produksi** > tombol Expired di barisnya | Dihitung sebagai kerugian |
 | Pengingat buatan sendiri | **Pengaturan** > Kelola pengingat | Muncul di lonceng dan notifikasi perangkat |
 
+Halaman Produksi juga menampilkan kolom **Botol / kelapa** per batch dan rata-rata semua batch (mis. 1 kelapa ≈ 1,18 botol), berguna untuk memperkirakan berapa kelapa yang perlu dibeli.
+
 **Beranda** menampilkan angka hari ini: saldo kas, stok bahan (masuk dan keluar hari ini), botol jadi, botol keluar, dan botol yang masih di mart. **Laporan** menampilkan untung rugi per periode, tabel rincinya dilipat (klik judulnya untuk membuka).
 
 ### Botol penyok (bal 84, terpakai 70)

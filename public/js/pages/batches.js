@@ -4,6 +4,10 @@ import { api } from '../api.js';
 
 const COST_SUGGESTIONS = ['Tenaga kerja', 'Gas / listrik', 'Ongkos kirim', 'Es batu', 'Dus / kemasan', 'Sewa tempat'];
 
+// Kelapa yang dipakai di satu batch (bahan yang namanya mengandung "kelapa") dan hasil botolnya.
+const coconutsUsed = (b) => (b.items || []).filter((i) => /kelapa/i.test(i.name)).reduce((s, i) => s + (Number(i.qty) || 0), 0);
+const fmt2 = (n) => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+
 function expiryCell(b) {
   if (b.stockTotal <= 0) return fmtDate(b.expiryDate);
   const left = daysBetween(b.expiryDate, today());
@@ -20,6 +24,7 @@ export function renderBatches(root, page, ctx) {
     { key: 'goodBottles', label: 'Botol jadi', type: 'int' },
     { key: 'totalCost', label: 'Total modal', type: 'rp' },
     { key: 'hpp', label: 'HPP per botol', type: 'rp' },
+    { key: 'yield', label: 'Botol / kelapa', render: (b) => { const k = coconutsUsed(b); return k > 0 ? fmt2(b.goodBottles / k) : '—'; } },
     { key: 'stockWarehouse', label: 'Stok gudang', type: 'int' },
     { key: 'remainingAtPartners', label: 'Di mart', type: 'int' },
   ];
@@ -46,9 +51,20 @@ export function renderBatches(root, page, ctx) {
     try { await api(`/batches/${b.id}`, { method: 'DELETE' }); toast('Batch dihapus'); await ctx.refresh(); } catch (e) { toast(e.message, 'error'); }
   }
 
+  // Rata-rata semua batch: total botol jadi dibagi total kelapa. Berguna untuk memperkirakan belanja kelapa.
+  const used = ctx.data.batches.filter((b) => coconutsUsed(b) > 0);
+  const totalCoconuts = used.reduce((s, b) => s + coconutsUsed(b), 0);
+  const totalBottles = used.reduce((s, b) => s + (Number(b.goodBottles) || 0), 0);
+  const yieldInfo = totalCoconuts > 0 && totalBottles > 0
+    ? h('p', { class: 'yield-note' },
+      h('b', {}, `1 kelapa ≈ ${fmt2(totalBottles / totalCoconuts)} botol`),
+      ` (rata-rata ${used.length} batch). Untuk 100 botol siapkan sekitar ${Math.ceil(100 * totalCoconuts / totalBottles)} kelapa.`)
+    : null;
+
   root.replaceChildren(
     pageHeader('Produksi', 'Isi botol jadi dan kelapa yang dipakai. Botol, tutup, dan label terisi otomatis, HPP per botol dihitung sendiri.',
       h('button', { class: 'btn primary', onclick: () => openBatchForm(null, ctx) }, 'Tambah batch')),
+    ...(yieldInfo ? [yieldInfo] : []),
     h('div', { class: 'panel flush' }, dataTable(columns, ctx.data.batches, {
       stack: true,
       emptyText: 'Belum ada batch. Klik "Tambah batch" untuk mencatat produksi pertama.',
