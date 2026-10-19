@@ -215,7 +215,7 @@ function list(db, col) {
   switch (col) {
     case 'materials': return db.materials.slice().sort((a, b) => a.name.localeCompare(b.name)).map((m) => {
       const s = c.inv.mats.get(m.id);
-      return { ...m, tracked: s.tracked, stockQty: s.tracked ? Math.round(s.qty * 100) / 100 : null, avgCost: s.tracked ? s.avg : num(m.price), stockValue: s.tracked ? Math.max(0, s.value) : 0 };
+      return { ...m, perBottle: m.perBottle !== undefined ? !!m.perBottle : /botol|tutup|label|stiker/i.test(m.name), tracked: s.tracked, stockQty: s.tracked ? Math.round(s.qty * 100) / 100 : null, avgCost: s.tracked ? s.avg : num(m.price), stockValue: s.tracked ? Math.max(0, s.value) : 0 };
     });
     case 'partners': return [...c.partners.values()].sort((a, b) => a.name.localeCompare(b.name));
     case 'batches': return [...c.batches.values()].sort(byDateDesc);
@@ -281,7 +281,7 @@ function notifications(db) {
     }
     for (const [partnerId, r] of byPartner) {
       out.push({
-        key: `unpaid:${partnerId}:${t}`, kind: 'unpaid', page: 'sales', sort: 100,
+        key: `unpaid:${partnerId}:${t}`, kind: 'unpaid', page: 'visit', sort: 100,
         title: `${r.name} belum membayar ${idr(r.total)}`,
         body: `${r.count} catatan penjualan, yang tertua ${diffDays(t, r.oldest)} hari lalu.`,
       });

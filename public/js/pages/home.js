@@ -14,7 +14,7 @@ export async function renderHome(root, page, ctx) {
   const quick = h('div', { class: 'quick' },
     h('a', { class: 'btn primary', href: '#/purchases?add' }, 'Belanja bahan'),
     h('a', { class: 'btn primary', href: '#/batches?add' }, 'Catat produksi'),
-    h('a', { class: 'btn primary', href: '#/visit' }, 'Order mart'),
+    h('a', { class: 'btn primary', href: '#/visit' }, 'Mart'),
     h('a', { class: 'btn', href: '#/expenses?add' }, 'Pengeluaran'));
 
   const alerts = d.alerts.length ? h('section', { class: 'alert' }, h('h2', {}, 'Perlu perhatian'),
@@ -23,22 +23,19 @@ export async function renderHome(root, page, ctx) {
   const money = h('section', { class: 'ledger', 'aria-label': 'Uang' },
     h('div', { class: 'ledger-rows' },
       row('Uang masuk hari ini', rp(m.receivedToday)),
-      row('Belanja bahan hari ini', `− ${rp(m.spentBuy)}`, 'neg'),
-      row('Pengeluaran hari ini', `− ${rp(m.spentExp)}`, 'neg'),
-      row('Biaya produksi lain hari ini', `− ${rp(m.spentProd)}`, 'neg'),
+      row('Uang keluar hari ini', `− ${rp(m.spentToday)}`, 'neg'),
       row('Nilai stok (bahan + botol)', rp(c.stockValue)),
       row('Belum dibayar mart', rp(c.receivable))),
     h('div', { class: 'ledger-result' },
       h('span', { class: 'label' }, 'Saldo kas (uang di tangan)'),
       h('span', { class: `big${c.balance < 0 ? ' loss' : ''}` }, rp(c.balance)),
       h('span', { class: 'note' }, c.deposits === 0
-        ? 'Saldo masih dihitung dari nol. Catat saldo awal atau modal di menu Modal & kas supaya angkanya pas dengan uang asli.'
-        : `Modal masuk ${rp(c.deposits)}, ditarik ${rp(c.withdrawals)}. Uang dari mart sudah dihitung begitu dicatat lunas.`)));
+        ? ['Saldo masih dihitung dari nol. ', h('a', { href: '#/capital' }, 'Catat saldo awal'), ' supaya pas dengan uang asli.']
+        : `Modal masuk ${rp(c.deposits)}, ditarik ${rp(c.withdrawals)}.`)));
 
   const bottles = h('div', { class: 'stats' },
     stat(int(d.bottles.madeToday), 'Botol jadi hari ini'),
     stat(int(d.bottles.deliveredToday), 'Botol keluar ke mart hari ini'),
-    stat(int(d.bottles.soldToday), 'Botol laku (dicatat hari ini)'),
     stat(int(d.bottles.warehouse), 'Botol di gudang'),
     stat(int(d.bottles.atPartners), 'Botol di mart'));
 
@@ -53,7 +50,6 @@ export async function renderHome(root, page, ctx) {
     { key: 'name', label: 'Mart' },
     { key: 'remaining', label: 'Botol di mart', type: 'int' },
     { key: 'since', label: 'Order tertua', render: (r) => fmtDate(r.since) },
-    { key: 'estimate', label: 'Tagihan jika laku semua', type: 'rp' },
   ];
 
   root.replaceChildren(

@@ -13,7 +13,7 @@ Lalu buka http://localhost:3000. Server harus tetap jalan selama aplikasi dipaka
 
 ## Dipakai di HP dan iPad
 
-Tampilan menyesuaikan otomatis: laptop (menu di kiri), iPad landscape (menu kiri lebih ramping), iPad portrait dan HP (menu di atas yang bisa digeser, daftar jadi kartu per baris, form jadi lembar dari bawah).
+Tampilan menyesuaikan otomatis: laptop (menu di kiri), iPad landscape (menu kiri lebih ramping), iPad portrait dan HP (menu lewat tombol hamburger di kanan atas, daftar jadi kartu per baris, form jadi lembar dari bawah).
 
 Untuk membuka dari HP atau iPad di WiFi yang sama dengan laptop:
 1. Jalankan `npm start` di laptop.
@@ -32,35 +32,50 @@ Tips: di HP, pilih "Tambahkan ke Layar Utama" di menu browser agar muncul sepert
 
 Data lama tidak hilang. Koleksi `expenses` dan kategori pengeluaran dibuat otomatis kalau belum ada.
 
-## Alur harian (ringkas)
+## Mulai dari awal (reset data)
 
-| Kejadian | Catat di | Hasilnya |
+Buka **Pengaturan**, scroll ke **Mulai dari awal**. Ada dua pilihan:
+
+- **Hapus transaksi saja**: mengosongkan batch, belanja, pengiriman, penjualan, retur, expired, bahan terbuang, pengeluaran, dan modal. Daftar bahan, mitra, pengingat, dan pengaturan tetap ada. Cocok untuk membuang data uji coba.
+- **Hapus semua data**: kembali seperti aplikasi baru.
+
+Keduanya meminta Anda mengetik **HAPUS**. Sebelum menghapus, server menyimpan salinan otomatis di folder `data/` (nama `backup-sebelum-reset-<tanggal>-<jam>.json`). Kalau menyesal, pakai **Pulihkan dari file** dan pilih file itu.
+Cara manual: hentikan server, hapus file `data/db.json`, jalankan lagi. Data baru dibuat otomatis.
+
+## Alur harian (7 menu)
+
+Menu mengikuti urutan kerja: **Beranda, Belanja, Produksi, Mart, Pengeluaran, Laporan, Pengaturan**. Di HP dibuka lewat tombol hamburger.
+
+| Kejadian | Menu | Hasilnya |
 |---|---|---|
-| Beli kelapa, botol, tutup, label | **Belanja bahan** | Stok naik, harga rata-rata dihitung otomatis |
-| Produksi hari ini | **Produksi & HPP** | Stok bahan berkurang, HPP per botol dihitung dari harga rata-rata stok |
-| Mart bayar nota lama dan order baru | **Order mart** | Penjualan, retur, expired, dan pengiriman baru tercatat sekaligus |
+| Beli kelapa, botol, tutup, label (kelapa masuk) | **Belanja** | Stok naik, harga rata-rata dihitung otomatis |
+| Produksi hari ini (kelapa keluar) | **Produksi** | Isi botol jadi dan kelapa terpakai. Botol, tutup, dan label terisi otomatis. HPP dihitung sendiri |
+| Botol ke mart, nota lama, bayar | **Mart** | Penjualan, retur, expired, dan pengiriman baru tercatat sekaligus |
 | Uang keluar lain (gaji, bensin, sampah) | **Pengeluaran** | Mengurangi profit dan saldo kas |
-| Kelapa busuk, botol pecah | **Bahan terbuang** | Stok berkurang, dihitung sebagai kerugian |
-| Setor modal atau tarik uang pribadi | **Modal & kas** | Saldo kas cocok dengan uang asli |
+| Kelapa busuk, botol pecah | **Belanja** > Buang / rusak | Stok berkurang, dihitung sebagai kerugian |
+| Setor modal, tarik uang pribadi | **Pengeluaran** > Modal & tarik uang | Saldo kas cocok dengan uang asli |
+| Tambah mart, ubah harga, koreksi salah catat | **Mart** | Tombol Mart baru, Ubah mart, dan Riwayat di bawahnya |
+| Botol di gudang kedaluwarsa | **Produksi** > tombol Expired di barisnya | Dihitung sebagai kerugian |
+| Pengingat buatan sendiri | **Pengaturan** > Kelola pengingat | Muncul di lonceng dan notifikasi perangkat |
 
-**Beranda** menampilkan angka hari ini: kelapa dan bahan masuk, bahan keluar, botol jadi, botol keluar ke mart, botol yang masih di mart, dan saldo kas. **Laporan** menampilkan untung rugi per periode.
+**Beranda** menampilkan angka hari ini: saldo kas, stok bahan (masuk dan keluar hari ini), botol jadi, botol keluar, dan botol yang masih di mart. **Laporan** menampilkan untung rugi per periode, tabel rincinya dilipat (klik judulnya untuk membuka).
 
 ### Botol penyok (bal 84, terpakai 70)
 Di **Belanja bahan** isi dibeli 84, rusak 14, total bayar Rp420.000. Yang masuk stok 70 botol dan harga per botol dihitung dari 70 (Rp6.000), bukan 84 (Rp5.000). Formulir menampilkan hitungannya langsung. Kalau penyoknya ketahuan belakangan, catat di **Bahan terbuang**.
 
-### Order mart (mart bayar saat order berikutnya)
+### Mart (mart bayar saat order berikutnya)
 Pilih mart, isi hasil nota sebelumnya (laku, kembali layak, kembali rusak, expired), lalu isi botol baru yang dikirim. Aplikasi menghitung uang yang harus diterima. Botol yang belum dihitung tetap tercatat di mart. Botol di mart dihitung dari pengiriman tertua, dan botol baru diambil dari batch yang paling dekat expired. Order pertama cukup isi botol yang dikirim.
 
 ### Saldo kas
 `Saldo kas = modal disetor - ditarik + uang dari mart (lunas) - belanja bahan - pengeluaran - biaya produksi lain`.
-Catat saldo awal di **Modal & kas** sekali saja. Bahan yang belanjanya sudah dicatat dihitung saat dibeli. Bahan yang belum pernah dicatat belanjanya (data lama) dihitung saat dipakai di batch.
+Catat saldo awal sekali saja lewat tautan "Catat saldo awal" di Beranda (atau Pengeluaran > Modal & tarik uang). Bahan yang belanjanya sudah dicatat dihitung saat dibeli. Bahan yang belum pernah dicatat belanjanya (data lama) dihitung saat dipakai di batch.
 Untuk memulai stok: catat stok bahan yang ada sekarang sebagai satu kali **Belanja bahan** (perkiraan harga boleh).
 
 ## Notifikasi
 
 Ada dua jenis notifikasi. Semuanya masuk ke **ikon lonceng** (kiri atas, di samping nama usaha) dengan penanda jumlah yang belum dibaca.
 
-**1. Pengingat buatan sendiri** (menu **Notifikasi**). Isi judul, pesan, jam, dan pengulangan: sekali saja (pilih tanggal), setiap hari, Senin sampai Jumat, atau setiap minggu (pilih hari). Pengingat bisa dimatikan sementara tanpa dihapus.
+**1. Pengingat buatan sendiri** (Pengaturan > **Kelola pengingat**). Isi judul, pesan, jam, dan pengulangan: sekali saja (pilih tanggal), setiap hari, Senin sampai Jumat, atau setiap minggu (pilih hari). Pengingat bisa dimatikan sementara tanpa dihapus.
 
 **2. Peringatan otomatis** (diatur di **Pengaturan > Notifikasi**):
 
@@ -69,7 +84,6 @@ Ada dua jenis notifikasi. Semuanya masuk ke **ikon lonceng** (kiri atas, di samp
 | Aktifkan semua notifikasi | Saklar utama |
 | Ingatkan batch yang hampir expired | Muncul jika batch masih punya stok dan expired dalam N hari (0 = hanya hari expired). Angka N juga dipakai di peringatan Ringkasan |
 | Ingatkan pembayaran mitra yang belum masuk | Muncul per mitra jika ada penjualan belum lunas lebih dari N hari |
-| Jam tenang | Di jam ini notifikasi tidak muncul sebagai notifikasi perangkat (tetap masuk lonceng) |
 
 Peringatan otomatis muncul sekali per hari selama kondisinya masih berlaku.
 

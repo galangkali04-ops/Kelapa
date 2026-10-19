@@ -49,9 +49,6 @@ api.put('/settings', (req, res) => {
   };
   if ('notifExpiryDays' in clean) clean.notifExpiryDays = toInt(clean.notifExpiryDays, 2, 0, 14);
   if ('notifUnpaidDays' in clean) clean.notifUnpaidDays = toInt(clean.notifUnpaidDays, 3, 1, 60);
-  for (const [k, def] of [['notifQuietFrom', '21:00'], ['notifQuietTo', '05:00']]) {
-    if (k in clean && !/^([01]\d|2[0-3]):[0-5]\d$/.test(clean[k])) clean[k] = def;
-  }
   if (!clean.businessName) clean.businessName = 'Air Kelapa Saya';
   const db = structuredClone(store.get());
   db.settings = { ...db.settings, ...clean };
@@ -75,6 +72,25 @@ api.get('/report', (req, res) => {
 api.get('/backup', (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="backup-air-kelapa-${calc.today()}.json"`);
   res.json(store.get());
+});
+
+// Mulai dari awal. mode 'transactions' = hapus semua catatan tapi simpan bahan, mitra, pengingat, dan pengaturan.
+// mode 'all' = kembali seperti baru. Salinan data disimpan otomatis di folder data/ sebelum dihapus.
+api.post('/reset', (req, res) => {
+  const { mode, confirm } = req.body || {};
+  if (!['transactions', 'all'].includes(mode)) return res.status(400).json({ error: 'Pilihan reset tidak valid.' });
+  if (confirm !== 'HAPUS') return res.status(400).json({ error: 'Ketik HAPUS untuk melanjutkan.' });
+  const file = store.backup('sebelum-reset');
+  const current = store.get();
+  const next = store.defaults();
+  if (mode === 'transactions') {
+    next.settings = current.settings;
+    next.materials = current.materials;
+    next.partners = current.partners;
+    next.reminders = current.reminders;
+  }
+  store.set(store.normalize(next));
+  return res.json({ ok: true, backupFile: file });
 });
 
 api.post('/restore', (req, res) => {

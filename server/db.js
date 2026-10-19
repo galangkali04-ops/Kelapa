@@ -8,7 +8,7 @@ const FILE = process.env.DATA_FILE || path.join(__dirname, '..', 'data', 'db.jso
 const COLLECTIONS = ['materials', 'partners', 'batches', 'deliveries', 'sales', 'returns', 'expirations', 'expenses', 'reminders', 'purchases', 'stockouts', 'capital'];
 
 function defaults() {
-  const mat = (name, unit) => ({ id: crypto.randomUUID(), name, unit, price: 0, note: '', createdAt: new Date().toISOString() });
+  const mat = (name, unit, perBottle = false) => ({ id: crypto.randomUUID(), name, unit, price: 0, note: '', perBottle, createdAt: new Date().toISOString() });
   return {
     settings: {
       businessName: 'Air Kelapa Saya',
@@ -22,11 +22,8 @@ function defaults() {
       notifExpiryDays: 2,
       notifUnpaid: true,
       notifUnpaidDays: 3,
-      notifQuiet: false,
-      notifQuietFrom: '21:00',
-      notifQuietTo: '05:00',
     },
-    materials: [mat('Kelapa', 'butir'), mat('Botol', 'pcs'), mat('Tutup botol', 'pcs'), mat('Label / stiker', 'pcs')],
+    materials: [mat('Kelapa', 'butir'), mat('Botol', 'pcs', true), mat('Tutup botol', 'pcs', true), mat('Label / stiker', 'pcs', true)],
     partners: [], batches: [], deliveries: [], sales: [], returns: [], expirations: [], expenses: [], reminders: [], purchases: [], stockouts: [], capital: [],
   };
 }
@@ -57,8 +54,20 @@ function load() {
 }
 
 let db = load();
+
+// Simpan salinan data sekarang di folder data/ (dipakai sebelum reset). Mengembalikan nama file.
+function backup(label) {
+  const stamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15);
+  const name = `backup-${label}-${stamp}.json`;
+  fs.mkdirSync(path.dirname(FILE), { recursive: true });
+  fs.writeFileSync(path.join(path.dirname(FILE), name), JSON.stringify(db, null, 2));
+  return name;
+}
+
 module.exports = {
   COLLECTIONS,
+  defaults,
+  backup,
   normalize,
   get: () => db,
   set: (next) => { save(next); db = next; },

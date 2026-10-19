@@ -2,6 +2,9 @@
 import { h, rp, int, pct, fmtDate, dataTable, pageHeader, trendChart } from '../ui.js';
 import { api } from '../api.js';
 
+// Tabel rinci disembunyikan dulu supaya laporan tidak ramai. Klik judulnya untuk membuka.
+const fold = (title, ...content) => h('details', { class: 'fold' }, h('summary', {}, title), ...content);
+
 const range = { preset: 'month', from: '', to: '' };
 const iso = (d) => d.toLocaleDateString('sv-SE');
 
@@ -54,25 +57,21 @@ export async function renderDashboard(root, page, ctx) {
       h('span', { class: 'note' }, `Margin bersih ${pct(t.netMargin)}. Modal produksi periode ini ${rp(t.totalModal)}. Revenue dihitung dari botol yang sudah terjual, bukan dari yang dikirim.`)));
 
   const stats = h('div', { class: 'stats' },
-    stat(rp(t.totalModal), 'Total modal produksi'),
-    stat(rp(t.expenses), 'Total pengeluaran', t.expenses > 0),
-    stat(rp(t.purchases), 'Belanja bahan (uang keluar)'),
     stat(int(t.produced), 'Botol diproduksi'),
     stat(rp(t.avgHpp), 'HPP rata-rata per botol'),
-    stat(int(t.delivered), 'Botol dikirim ke mitra'),
     stat(int(t.sold), 'Botol terjual'),
-    stat(int(t.returned), `Botol kembali (${int(t.returnedGood)} layak)`),
     stat(int(t.expired), 'Botol expired', t.expired > 0),
     stat(int(rep.stock.warehouse), 'Stok di gudang (saat ini)'),
-    stat(int(rep.stock.atPartners), 'Stok di mitra (saat ini)'),
-    stat(rp(t.unpaid), 'Belum dibayar mitra', t.unpaid > 0));
+    stat(int(rep.stock.atPartners), 'Stok di mart (saat ini)'),
+    stat(rp(t.expenses), 'Total pengeluaran', t.expenses > 0),
+    stat(rp(t.unpaid), 'Belum dibayar mart', t.unpaid > 0));
 
   const alerts = rep.alerts.length ? h('section', { class: 'alert' },
     h('h2', {}, 'Botol hampir atau sudah expired'),
     h('ul', {}, rep.alerts.map((a) => {
       const when = a.daysLeft < 0 ? `lewat ${-a.daysLeft} hari` : a.daysLeft === 0 ? 'expired hari ini' : `${a.daysLeft} hari lagi`;
       const where = [a.stockWarehouse > 0 ? `${int(a.stockWarehouse)} di gudang` : '', ...a.partners.map((p) => `${int(p.remaining)} di ${p.name}`)].filter(Boolean).join(', ');
-      return h('li', {}, h('b', {}, a.code), ` (${when}, ${fmtDate(a.expiryDate)}): ${where}. Catat di menu Botol expired jika sudah tidak bisa dijual.`);
+      return h('li', {}, h('b', {}, a.code), ` (${when}, ${fmtDate(a.expiryDate)}): ${where}. Kalau sudah tidak bisa dijual, catat expired di halaman Produksi (gudang) atau Mart (di mart).`);
     }))) : null;
 
   const categoryCols = [
@@ -80,8 +79,8 @@ export async function renderDashboard(root, page, ctx) {
     { key: 'total', label: 'Total', type: 'rp' }, { key: 'share', label: 'Porsi', type: 'pct' },
   ];
   const partnerCols = [
-    { key: 'name', label: 'Mitra' }, { key: 'delivered', label: 'Dikirim', type: 'int' }, { key: 'sold', label: 'Terjual', type: 'int' },
-    { key: 'returned', label: 'Kembali', type: 'int' }, { key: 'expired', label: 'Expired', type: 'int' }, { key: 'remaining', label: 'Sisa di mitra', type: 'int' },
+    { key: 'name', label: 'Mart' }, { key: 'delivered', label: 'Dikirim', type: 'int' }, { key: 'sold', label: 'Terjual', type: 'int' },
+    { key: 'returned', label: 'Kembali', type: 'int' }, { key: 'expired', label: 'Expired', type: 'int' }, { key: 'remaining', label: 'Sisa di mart', type: 'int' },
     { key: 'revenue', label: 'Revenue', type: 'rp' }, { key: 'grossProfit', label: 'Gross profit', type: 'rp' }, { key: 'unpaid', label: 'Belum dibayar', type: 'rp' },
   ];
   const batchCols = [
@@ -93,13 +92,10 @@ export async function renderDashboard(root, page, ctx) {
   root.replaceChildren(
     pageHeader(`Laporan ${ctx.settings.businessName || ''}`.trim(), 'Untung rugi sesuai periode. Belanja bahan tidak mengurangi profit saat dibeli, tapi saat bahannya terpakai di batch.', filters),
     ...(alerts ? [alerts] : []), ledger, stats,
-    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Pengeluaran per kategori'), h('p', { class: 'muted' }, 'Dicatat di menu Biaya pengeluaran.')),
-      dataTable(categoryCols, rep.perCategory, { emptyText: 'Belum ada pengeluaran pada periode ini.' })),
-    h('section', { class: 'panel' }, h('h2', {}, 'Revenue dan gross profit per hari'),
-      rep.trend.length ? [trendChart(rep.trend), h('div', { class: 'legend' }, h('span', {}, h('i', { style: 'background:var(--water)' }), 'Revenue'), h('span', {}, h('i', { style: 'background:var(--husk)' }), 'Gross profit'))]
-        : h('p', { class: 'empty' }, 'Belum ada penjualan pada periode ini.')),
-    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Per mitra')),
-      dataTable(partnerCols, rep.perPartner, { emptyText: 'Belum ada aktivitas mitra pada periode ini.' })),
-    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Per batch'), h('p', { class: 'muted' }, 'Batch yang diproduksi pada periode ini, dengan angka penjualan sepanjang batch tersebut.')),
-      dataTable(batchCols, rep.perBatch, { emptyText: 'Belum ada batch pada periode ini.' })));
+    fold('Pengeluaran per kategori', dataTable(categoryCols, rep.perCategory, { emptyText: 'Belum ada pengeluaran pada periode ini.' })),
+    fold('Grafik penjualan per hari', rep.trend.length
+      ? [trendChart(rep.trend), h('div', { class: 'legend' }, h('span', {}, h('i', { style: 'background:var(--water)' }), 'Revenue'), h('span', {}, h('i', { style: 'background:var(--husk)' }), 'Gross profit'))]
+      : h('p', { class: 'empty' }, 'Belum ada penjualan pada periode ini.')),
+    fold('Per mart', dataTable(partnerCols, rep.perPartner, { emptyText: 'Belum ada aktivitas mart pada periode ini.' })),
+    fold('Per batch', dataTable(batchCols, rep.perBatch, { emptyText: 'Belum ada batch pada periode ini.' })));
 }

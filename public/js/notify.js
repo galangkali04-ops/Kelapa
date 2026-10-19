@@ -70,16 +70,6 @@ export function dueReminders(reminders, now = new Date()) {
   return items;
 }
 
-/* ---------- Jam tenang ---------- */
-function inQuietHours(s, now = new Date()) {
-  if (!s.notifQuiet) return false;
-  const toMin = (t) => { const [a, b] = String(t || '').split(':').map(Number); return a * 60 + b; };
-  const cur = now.getHours() * 60 + now.getMinutes();
-  const from = toMin(s.notifQuietFrom); const to = toMin(s.notifQuietTo);
-  if (Number.isNaN(from) || Number.isNaN(to) || from === to) return false;
-  return from < to ? cur >= from && cur < to : cur >= from || cur < to;
-}
-
 /* ---------- Notifikasi perangkat ---------- */
 export function deviceSupport() {
   if (!('Notification' in window)) {
@@ -150,12 +140,11 @@ function openInbox() {
 }
 
 /* ---------- Pemeriksaan berkala ---------- */
-function announce(items, settings) {
+function announce(items) {
   if (document.visibilityState === 'visible') {
     toast(items.length === 1 ? `${items[0].title}${items[0].body ? ` · ${items[0].body}` : ''}` : `${items.length} notifikasi baru`, '', 7000);
     return;
   }
-  if (inQuietHours(settings)) return;
   if (items.length === 1) deviceNotify(items[0].title, items[0].body, items[0].page);
   else deviceNotify(`${items.length} notifikasi baru`, items.map((i) => i.title).join(' · ').slice(0, 200), '');
 }
@@ -181,8 +170,16 @@ async function tick() {
     inbox = [...fresh.map((c) => ({ id: c.key, kind: c.kind, title: c.title, body: c.body, page: c.page, ts: now, read: false })), ...inbox].slice(0, MAX_INBOX);
     save(INBOX_KEY, inbox);
     updateBell();
-    announce(fresh, settings);
+    announce(fresh);
   } finally { busy = false; }
+}
+
+// Dipakai saat data direset: kosongkan lonceng dan catatan "sudah diberi tahu" di perangkat ini.
+export function clearNotificationHistory() {
+  inbox = [];
+  save(INBOX_KEY, inbox);
+  save(FIRED_KEY, {});
+  updateBell();
 }
 
 export function startNotifications(ctx) {

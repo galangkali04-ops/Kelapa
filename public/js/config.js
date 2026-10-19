@@ -19,13 +19,13 @@ const csv = (v) => String(v || '').split(',').map((x) => x.trim()).filter(Boolea
 
 const ALL = [
   { id: 'home', label: 'Beranda', type: 'home' },
-  { id: 'visit', label: 'Order mart', type: 'visit' },
+  { id: 'visit', label: 'Mart', type: 'visit' },
   { id: 'dashboard', label: 'Laporan', type: 'dashboard' },
-  { id: 'batches', label: 'Produksi & HPP', type: 'batches' },
+  { id: 'batches', label: 'Produksi', type: 'batches' },
 
   {
-    id: 'purchases', label: 'Belanja bahan', type: 'crud', collection: 'purchases', singular: 'belanja',
-    intro: 'Catat setiap beli kelapa, botol, tutup, atau label. Stok bertambah dan harga rata-rata dihitung otomatis, jadi HPP di produksi tidak perlu mengetik harga lagi. Bahan yang penyok atau rusak saat datang diisi di kolom rusak, biayanya otomatis terbagi ke barang yang bagus.',
+    id: 'purchases', label: 'Belanja', type: 'stock', collection: 'purchases', singular: 'belanja',
+    intro: 'Catat setiap beli kelapa, botol, tutup, atau label. Stok dan harga rata-rata terisi sendiri, botol penyok tidak ikut dihitung.',
     columns: [
       { key: 'date', label: 'Tanggal', type: 'date' },
       { key: 'materialName', label: 'Bahan' },
@@ -74,6 +74,7 @@ const ALL = [
 
   {
     id: 'capital', label: 'Modal & kas', type: 'crud', collection: 'capital', singular: 'catatan modal',
+    links: [{ label: 'Kembali ke Pengeluaran', href: '#/expenses' }],
     intro: 'Catat saldo awal atau modal yang Anda setor, dan uang usaha yang Anda tarik untuk pribadi. Dengan ini Saldo kas di Beranda cocok dengan uang yang benar-benar ada. Uang dari mart dan belanja bahan sudah dihitung otomatis.',
     columns: [
       { key: 'date', label: 'Tanggal', type: 'date' },
@@ -91,6 +92,7 @@ const ALL = [
 
   {
     id: 'expenses', label: 'Pengeluaran', type: 'crud', collection: 'expenses', singular: 'pengeluaran',
+    links: [{ label: 'Modal & tarik uang', href: '#/capital' }],
     intro: 'Catat semua uang keluar di luar modal batch: sampah, gaji, beli botol kaca, listrik, bensin, sampai pengeluaran tak terduga. Total pengeluaran dikurangkan dari profit di Ringkasan. Bahan yang sudah dimasukkan di batch produksi jangan dicatat lagi di sini supaya tidak terhitung dua kali.',
     columns: [
       { key: 'date', label: 'Tanggal', type: 'date' },
@@ -124,6 +126,7 @@ const ALL = [
       { key: 'name', label: 'Nama bahan', type: 'text', required: true, placeholder: 'Mis. Kelapa muda' },
       { key: 'unit', label: 'Satuan', type: 'text', suggest: ['butir', 'pcs', 'kg', 'liter', 'dus'], placeholder: 'butir, pcs, kg…' },
       { key: 'price', label: 'Harga perkiraan per satuan (Rp)', type: 'money', default: 0, help: 'Hanya dipakai kalau belanja bahan ini belum dicatat.' },
+      { key: 'perBottle', label: 'Dipakai 1 per botol', type: 'checkbox', default: false, full: true, help: 'Di form Produksi jumlahnya terisi otomatis sesuai jumlah botol (cocok untuk botol, tutup, label).' },
       { key: 'note', label: 'Catatan', type: 'text' },
     ],
   },
@@ -246,8 +249,9 @@ const ALL = [
   },
 
   {
-    id: 'reminders', label: 'Notifikasi', type: 'crud', collection: 'reminders', singular: 'pengingat',
-    intro: 'Buat pengingat sendiri, misalnya kirim botol ke mitra, tagih pembayaran, atau belanja kelapa. Pengingat muncul di lonceng dan sebagai notifikasi perangkat. Notifikasi otomatis (batch hampir expired, pembayaran menunggak) diatur di menu Pengaturan.',
+    id: 'reminders', label: 'Pengingat', type: 'crud', collection: 'reminders', singular: 'pengingat',
+    links: [{ label: 'Kembali ke Pengaturan', href: '#/settings' }],
+    intro: 'Buat pengingat sendiri, misalnya kirim botol ke mitra, tagih pembayaran, atau belanja kelapa. Pengingat muncul di lonceng dan sebagai notifikasi perangkat. Notifikasi otomatis (batch hampir expired, pembayaran menunggak) diatur di Pengaturan.',
     columns: [
       { key: 'title', label: 'Pengingat' },
       { key: 'time', label: 'Jadwal', render: schedule },
@@ -271,32 +275,27 @@ const ALL = [
   {
     id: 'settings', label: 'Pengaturan', type: 'settings',
     fields: [
-      { key: 'businessName', label: 'Nama usaha', type: 'text', required: true },
-      { key: 'codePrefix', label: 'Awalan kode batch', type: 'text', help: 'Contoh: KLP menghasilkan KLP-20261009-01' },
-      { key: 'shelfLifeDays', label: 'Masa simpan default (hari)', type: 'int', required: true },
-      { key: 'partnerTypes', label: 'Pilihan tipe mitra', type: 'text', full: true, help: 'Pisahkan dengan koma.' },
-      { key: 'returnReasons', label: 'Pilihan alasan botol kembali', type: 'text', full: true, help: 'Pisahkan dengan koma.' },
-      { key: 'expenseCategories', label: 'Pilihan kategori pengeluaran', type: 'text', full: true, help: 'Pisahkan dengan koma. Tambah sendiri sesuai kebutuhan.' },
+      { key: 'businessName', label: 'Nama usaha', type: 'text', required: true, full: true },
+      { key: 'shelfLifeDays', label: 'Masa simpan botol (hari)', type: 'int', required: true, help: 'Tanggal expired batch otomatis dihitung dari tanggal produksi.' },
+      { key: 'expenseCategories', label: 'Pilihan kategori pengeluaran', type: 'text', full: true, help: 'Pisahkan dengan koma.' },
 
-      // --- Notifikasi otomatis. Pengingat buatan sendiri ada di menu Notifikasi. ---
-      { key: 'notifHead', type: 'heading', label: 'Notifikasi', help: 'Pilih peringatan otomatis yang ingin Anda terima. Pengingat buatan sendiri ada di menu Notifikasi.' },
-      { key: 'notifEnabled', label: 'Aktifkan semua notifikasi', type: 'checkbox', default: true, full: true },
+      { key: 'notifHead', type: 'heading', label: 'Notifikasi otomatis', help: 'Pengingat buatan sendiri ada di bagian Pengingat di bawah.' },
+      { key: 'notifEnabled', label: 'Aktifkan notifikasi', type: 'checkbox', default: true, full: true },
       { key: 'notifExpiry', label: 'Ingatkan batch yang hampir expired', type: 'checkbox', default: true, full: true, showIf: { field: 'notifEnabled', in: ['true'] } },
-      { key: 'notifExpiryDays', label: 'Mulai ingatkan (hari sebelum expired)', type: 'int', default: 2, showIf: { field: 'notifExpiry', in: ['true'] },
-        help: '0 = hanya di hari expired. Angka ini juga dipakai untuk peringatan di Ringkasan.' },
-      { key: 'notifUnpaid', label: 'Ingatkan pembayaran mitra yang belum masuk', type: 'checkbox', default: true, full: true, showIf: { field: 'notifEnabled', in: ['true'] } },
-      { key: 'notifUnpaidDays', label: 'Dianggap menunggak setelah (hari)', type: 'int', default: 3, showIf: { field: 'notifUnpaid', in: ['true'] },
-        help: 'Dihitung sejak tanggal penjualan yang belum ditandai lunas.' },
-      { key: 'notifQuiet', label: 'Jam tenang (tanpa notifikasi perangkat)', type: 'checkbox', default: false, full: true, showIf: { field: 'notifEnabled', in: ['true'] },
-        help: 'Notifikasi tetap masuk ke lonceng, hanya tidak muncul sebagai notifikasi perangkat.' },
-      { key: 'notifQuietFrom', label: 'Mulai', type: 'time', default: '21:00', showIf: { field: 'notifQuiet', in: ['true'] } },
-      { key: 'notifQuietTo', label: 'Selesai', type: 'time', default: '05:00', showIf: { field: 'notifQuiet', in: ['true'] } },
+      { key: 'notifExpiryDays', label: 'Mulai ingatkan (hari sebelum expired)', type: 'int', default: 2, showIf: { field: 'notifExpiry', in: ['true'] }, help: '0 = hanya di hari expired.' },
+      { key: 'notifUnpaid', label: 'Ingatkan pembayaran mart yang belum masuk', type: 'checkbox', default: true, full: true, showIf: { field: 'notifEnabled', in: ['true'] } },
+      { key: 'notifUnpaidDays', label: 'Dianggap menunggak setelah (hari)', type: 'int', default: 3, showIf: { field: 'notifUnpaid', in: ['true'] } },
     ],
   },
 ];
 
-// Menu utama di atas, sisanya dikelompokkan di bawah "Lainnya".
-const ORDER = ['home', 'visit', 'purchases', 'batches', 'expenses', 'dashboard',
-  'stockouts', 'capital', 'deliveries', 'sales', 'returns', 'expirations', 'materials', 'partners', 'reminders', 'settings'];
-export const PAGES = ORDER.map((id, i) => ({ ...ALL.find((p) => p.id === id), group: i < 6 ? 'main' : 'more' }));
+// Semua definisi form tetap tersedia lewat DEF (dipakai halaman Belanja, Mart, Produksi).
+export const DEF = Object.fromEntries(ALL.map((p) => [p.id, p]));
 
+// Menu hanya 7: urutannya mengikuti kerja harian. Halaman tersembunyi dibuka lewat tombol di halaman induknya.
+const ROUTES = [
+  ['home'], ['purchases'], ['batches'], ['visit'], ['expenses'], ['dashboard'], ['settings'],
+  ['capital', { hidden: true, nav: 'expenses' }],
+  ['reminders', { hidden: true, nav: 'settings' }],
+];
+export const PAGES = ROUTES.map(([id, extra]) => ({ ...DEF[id], ...extra }));

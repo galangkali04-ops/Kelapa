@@ -29,7 +29,7 @@ export function renderCrud(root, page, ctx) {
   }
 
   root.replaceChildren(
-    pageHeader(page.label, page.intro, add),
+    pageHeader(page.label, page.intro, ...(page.links || []).map((l) => h('a', { class: 'btn', href: l.href }, l.label)), add),
     h('div', { class: 'panel flush' },
       dataTable(page.columns, rows, {
         stack: true,

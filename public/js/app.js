@@ -7,11 +7,13 @@ import { renderBatches } from './pages/batches.js';
 import { renderCrud } from './pages/crud.js';
 import { renderSettings } from './pages/settings.js';
 import { renderHome } from './pages/home.js';
+import { renderStock } from './pages/stock.js';
 import { renderVisit } from './pages/visit.js';
 import { startNotifications } from './notify.js';
+import { initMenu } from './menu.js';
 
 // Tambahkan jenis halaman baru di sini jika membuat modul sendiri.
-const renderers = { home: renderHome, visit: renderVisit, dashboard: renderDashboard, batches: renderBatches, crud: renderCrud, settings: renderSettings };
+const renderers = { stock: renderStock, home: renderHome, visit: renderVisit, dashboard: renderDashboard, batches: renderBatches, crud: renderCrud, settings: renderSettings };
 
 const view = document.getElementById('view');
 const nav = document.getElementById('nav');
@@ -35,10 +37,8 @@ function currentPage() {
 async function route() {
   const page = currentPage();
   nav.querySelectorAll('a').forEach((a) => {
-    if (a.dataset.id === page.id) {
+    if (a.dataset.id === (page.nav || page.id)) {
       a.setAttribute('aria-current', 'page');
-      // di HP/iPad portrait menu bisa digeser: bawa menu aktif ke tengah
-      nav.scrollTo({ left: a.offsetLeft - (nav.clientWidth - a.offsetWidth) / 2 });
     } else a.removeAttribute('aria-current');
   });
   try {
@@ -48,10 +48,8 @@ async function route() {
   }
 }
 
-nav.append(...PAGES.flatMap((p, i) => [
-  p.group === 'more' && PAGES[i - 1].group !== 'more' ? h('span', { class: 'nav-sep' }, 'Lainnya') : null,
-  h('a', { href: `#/${p.id}`, 'data-id': p.id }, p.label),
-]).filter(Boolean));
+nav.append(...PAGES.filter((p) => !p.hidden).map((p) => h('a', { href: `#/${p.id}`, 'data-id': p.id }, p.label)));
+initMenu({ btn: document.getElementById('menuBtn'), nav, scrim: document.getElementById('scrim') });
 window.addEventListener('hashchange', () => { closeDialog(); route(); window.scrollTo(0, 0); });
 document.getElementById('dialog').addEventListener('click', (e) => { if (e.target.id === 'dialog') closeDialog(); });
 
