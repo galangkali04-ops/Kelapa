@@ -1,5 +1,6 @@
 // Belanja: stok bahan sekarang, tombol catat belanja / bahan terbuang / bahan baru, dan riwayatnya dalam satu halaman.
-import { h, rp, rpd, int, dataTable, pageHeader } from '../ui.js';
+import { h, rp, rpd, int, dataTable, pageHeader, toast } from '../ui.js';
+import { api } from '../api.js';
 import { DEF } from '../config.js';
 import { openForm, removeRow } from '../crudkit.js';
 
@@ -8,11 +9,39 @@ const badge = (text, cls = '') => h('span', { class: `badge ${cls}` }, text);
 export function renderStock(root, page, ctx) {
   const add = (def) => () => openForm(def, null, ctx);
 
+  const per = (m) => Number(m.perBottle) || 0;
+  const unitPrice = (m) => (m.tracked ? m.avgCost : Number(m.price) || 0);
+  const costPerBottle = ctx.data.materials.reduce((sum, m) => sum + per(m) * unitPrice(m), 0);
+  const fmt2 = (n) => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
+
+  // Saran jumlah kelapa per botol dari batch yang sudah ada (total kelapa dibagi total botol jadi).
+  const used = ctx.data.batches.map((b) => ({ bottles: Number(b.goodBottles) || 0, coco: (b.items || []).filter((i) => /kelapa/i.test(i.name)).reduce((x, i) => x + (Number(i.qty) || 0), 0) })).filter((x) => x.coco > 0 && x.bottles > 0);
+  const suggestion = used.length ? Math.round((used.reduce((x, u) => x + u.coco, 0) / used.reduce((x, u) => x + u.bottles, 0)) * 100) / 100 : 0;
+
+  // Simpan satu perubahan langsung dari tabel (harga per pcs atau jumlah per botol).
+  async function patch(m, changes) {
+    try {
+      await api(`/materials/${m.id}`, { method: 'PUT', body: { name: m.name, unit: m.unit, price: Number(m.price) || 0, perBottle: per(m), note: m.note || '', ...changes } });
+      toast('Tersimpan');
+      await ctx.refresh();
+    } catch (e) { toast(e.message, 'error'); }
+  }
+  const editCell = (m, key, label, suffix) => {
+    const el = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', class: 'cell-input', placeholder: '0', 'aria-label': `${m.name}: ${label}`, value: Number(m[key]) ? m[key] : '' });
+    el.addEventListener('change', () => patch(m, { [key]: el.value === '' ? 0 : Number(el.value) })); // tersimpan saat selesai mengetik
+    return h('span', { class: 'cell-edit' }, el, h('span', { class: 'muted' }, suffix));
+  };
+
   const stockCols = [
     { key: 'name', label: 'Bahan' },
-    { key: 'stockQty', label: 'Stok', render: (m) => (m.tracked ? `${int(m.stockQty)} ${m.unit || ''}`.trim() : 'belum ada belanja') },
-    { key: 'avgCost', label: 'Harga rata-rata', render: (m) => (m.tracked ? `${rpd(m.avgCost)}${m.unit ? ` / ${m.unit}` : ''}` : '—') },
-    { key: 'stockValue', label: 'Nilai stok', render: (m) => (m.tracked ? rp(m.stockValue) : '—') },
+    { key: 'price', label: 'Harga per pcs (Rp)', render: (m) => (m.tracked
+      ? h('span', {}, `${rpd(m.avgCost)}${m.unit ? ` / ${m.unit}` : ''} `, h('span', { class: 'muted' }, '(rata-rata belanja)'))
+      : editCell(m, 'price', 'harga per pcs', m.unit ? `/ ${m.unit}` : '')) },
+    { key: 'perBottle', label: 'Dipakai per botol', render: (m) => h('span', {}, editCell(m, 'perBottle', 'jumlah per botol', m.unit || ''),
+      !per(m) && suggestion > 0 && /kelapa/i.test(m.name)
+        ? h('button', { class: 'btn small', type: 'button', style: 'margin-top:6px', onclick: () => patch(m, { perBottle: suggestion }) }, `Pakai ${fmt2(suggestion)} (dari batch)`) : null) },
+    { key: 'cost', label: 'Modal per botol', render: (m) => (per(m) > 0 ? rpd(per(m) * unitPrice(m)) : '—') },
+    { key: 'stockQty', label: 'Stok', render: (m) => (m.tracked ? `${int(m.stockQty)} ${m.unit || ''}`.trim() : h('span', { class: 'muted' }, 'belum ada belanja')) },
   ];
 
   const rows = [
@@ -35,11 +64,14 @@ export function renderStock(root, page, ctx) {
   ];
 
   root.replaceChildren(
-    pageHeader('Belanja & stok', page.intro,
+    pageHeader('Bahan & belanja', page.intro,
       h('button', { class: 'btn primary', onclick: add(DEF.purchases) }, 'Belanja bahan'),
       h('button', { class: 'btn', onclick: add(DEF.stockouts) }, 'Buang / rusak'),
       h('button', { class: 'btn', onclick: add(DEF.materials) }, 'Bahan baru')),
-    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Stok sekarang')),
+    h('p', { class: 'yield-note' }, costPerBottle > 0
+      ? [h('b', {}, `Modal bahan per botol ≈ ${rpd(costPerBottle)}`), ' (jumlah per botol × harga per pcs, belum termasuk gas, tenaga, dan biaya lain di Produksi).']
+      : 'Isi harga per pcs dan jumlah per botol di tabel untuk melihat perkiraan modal bahan per botol.'),
+    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Bahan yang dibutuhkan')),
       dataTable(stockCols, ctx.data.materials, {
         stack: true, emptyText: 'Belum ada bahan.',
         actions: (m) => [

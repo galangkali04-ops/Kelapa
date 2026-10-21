@@ -44,15 +44,15 @@ Cara manual: hentikan server, hapus file `data/db.json`, jalankan lagi. Data bar
 
 ## Alur harian (7 menu)
 
-Menu mengikuti urutan kerja: **Beranda, Belanja, Produksi, Mart, Pengeluaran, Laporan, Pengaturan**. Di HP dibuka lewat tombol hamburger.
+Menu mengikuti urutan kerja: **Beranda, Bahan, Produksi, Mart, Pengeluaran, Laporan, Pengaturan**. Di HP dibuka lewat tombol hamburger.
 
 | Kejadian | Menu | Hasilnya |
 |---|---|---|
-| Beli kelapa, botol, tutup, label (kelapa masuk) | **Belanja** | Stok naik, harga rata-rata dihitung otomatis |
+| Beli kelapa, botol, tutup, label (kelapa masuk) | **Bahan** > Belanja bahan | Stok naik, harga rata-rata dihitung otomatis |
 | Produksi hari ini (kelapa keluar) | **Produksi** | Isi botol jadi dan kelapa terpakai. Botol, tutup, dan label terisi otomatis. HPP dihitung sendiri |
 | Botol ke mart, nota lama, bayar | **Mart** | Penjualan, retur, expired, dan pengiriman baru tercatat sekaligus |
 | Uang keluar lain (gaji, bensin, sampah) | **Pengeluaran** | Mengurangi profit dan saldo kas |
-| Kelapa busuk, botol pecah | **Belanja** > Buang / rusak | Stok berkurang, dihitung sebagai kerugian |
+| Kelapa busuk, botol pecah | **Bahan** > Buang / rusak | Stok berkurang, dihitung sebagai kerugian |
 | Setor modal, tarik uang pribadi | **Pengeluaran** > Modal & tarik uang | Saldo kas cocok dengan uang asli |
 | Tambah mart, ubah harga, koreksi salah catat | **Mart** | Tombol Mart baru, Ubah mart, dan Riwayat di bawahnya |
 | Botol di gudang kedaluwarsa | **Produksi** > tombol Expired di barisnya | Dihitung sebagai kerugian |
@@ -61,6 +61,14 @@ Menu mengikuti urutan kerja: **Beranda, Belanja, Produksi, Mart, Pengeluaran, La
 Halaman Produksi juga menampilkan kolom **Botol / kelapa** per batch dan rata-rata semua batch (mis. 1 kelapa ≈ 1,18 botol), berguna untuk memperkirakan berapa kelapa yang perlu dibeli.
 
 **Beranda** menampilkan angka hari ini: saldo kas, stok bahan (masuk dan keluar hari ini), botol jadi, botol keluar, dan botol yang masih di mart. **Laporan** menampilkan untung rugi per periode, tabel rincinya dilipat (klik judulnya untuk membuka).
+
+### Bahan dan harga per pcs
+Di menu **Bahan** ada tabel bahan yang dibutuhkan. Dua kolomnya bisa diisi langsung, tersimpan otomatis saat selesai mengetik:
+- **Harga per pcs**: mis. kelapa 7000, botol 1500, tutup 500, label 300.
+- **Dipakai per botol**: mis. botol 1, tutup 1, label 1, kelapa 0,85.
+
+Di atas tabel muncul **perkiraan modal bahan per botol** (jumlah per botol × harga per pcs). Di **Produksi**, cukup isi botol jadi dan semua bahan yang jumlah per botolnya sudah diisi terisi otomatis (mis. 45 botol → kelapa 38). Angkanya boleh diubah manual. Setelah ada batch, tombol "Pakai 0,84 (dari batch)" menyarankan jumlah kelapa per botol dari hasil produksi nyata.
+Begitu belanja bahan itu mulai dicatat (**Belanja bahan**), harga rata-rata dari belanja otomatis menggantikan harga manual. Tombol **Bahan baru** menambah bahan lain (mis. plastik segel, kardus).
 
 ### Botol penyok (bal 84, terpakai 70)
 Di **Belanja bahan** isi dibeli 84, rusak 14, total bayar Rp420.000. Yang masuk stok 70 botol dan harga per botol dihitung dari 70 (Rp6.000), bukan 84 (Rp5.000). Formulir menampilkan hitungannya langsung. Kalau penyoknya ketahuan belakangan, catat di **Bahan terbuang**.

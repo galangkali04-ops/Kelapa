@@ -24,8 +24,8 @@ const ALL = [
   { id: 'batches', label: 'Produksi', type: 'batches' },
 
   {
-    id: 'purchases', label: 'Belanja', type: 'stock', collection: 'purchases', singular: 'belanja',
-    intro: 'Catat setiap beli kelapa, botol, tutup, atau label. Stok dan harga rata-rata terisi sendiri, botol penyok tidak ikut dihitung.',
+    id: 'purchases', label: 'Bahan', type: 'stock', collection: 'purchases', singular: 'belanja',
+    intro: 'Daftar bahan yang dibutuhkan untuk 1 botol, lengkap dengan harga per pcs. Isi langsung di tabel. Catat belanja supaya stok dan harga rata-rata terisi sendiri.',
     columns: [
       { key: 'date', label: 'Tanggal', type: 'date' },
       { key: 'materialName', label: 'Bahan' },
@@ -125,8 +125,8 @@ const ALL = [
     fields: [
       { key: 'name', label: 'Nama bahan', type: 'text', required: true, placeholder: 'Mis. Kelapa muda' },
       { key: 'unit', label: 'Satuan', type: 'text', suggest: ['butir', 'pcs', 'kg', 'liter', 'dus'], placeholder: 'butir, pcs, kg…' },
-      { key: 'price', label: 'Harga perkiraan per satuan (Rp)', type: 'money', default: 0, help: 'Hanya dipakai kalau belanja bahan ini belum dicatat.' },
-      { key: 'perBottle', label: 'Dipakai 1 per botol', type: 'checkbox', default: false, full: true, help: 'Di form Produksi jumlahnya terisi otomatis sesuai jumlah botol (cocok untuk botol, tutup, label).' },
+      { key: 'price', label: 'Harga per pcs / satuan (Rp)', type: 'money', default: 0, help: 'Mis. kelapa 7000. Kalau belanjanya sudah rutin dicatat, harga rata-rata dari belanja yang dipakai.' },
+      { key: 'perBottle', label: 'Dipakai per botol', type: 'number', default: 0, help: 'Mis. botol 1, tutup 1, kelapa 0,85. Di Produksi jumlahnya terisi otomatis dari botol jadi. Kosongkan kalau tidak dipakai per botol.' },
       { key: 'note', label: 'Catatan', type: 'text' },
     ],
   },

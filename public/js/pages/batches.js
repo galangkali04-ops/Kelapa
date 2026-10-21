@@ -118,7 +118,7 @@ function openBatchForm(batch, ctx) {
   // Batch baru: semua bahan langsung muncul sebagai baris, tinggal isi jumlah.
   const items = isEdit
     ? batch.items.map((i) => ({ ...i }))
-    : ctx.data.materials.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: m.tracked ? m.avgCost : m.price, auto: !!m.perBottle }));
+    : ctx.data.materials.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: m.tracked ? m.avgCost : m.price, per: m.perBottle || 0, auto: (m.perBottle || 0) > 0 }));
   const costs = isEdit ? batch.costs.map((c) => ({ ...c })) : [];
 
   const itemsBox = h('div'); const costsBox = h('div');
@@ -134,7 +134,8 @@ function openBatchForm(batch, ctx) {
   // Bahan "dipakai 1 per botol" (botol, tutup, label) terisi otomatis = botol jadi + botol gagal, kecuali diubah manual.
   const autoFill = () => {
     const n = (Number(inputs.goodBottles.value) || 0) + (Number(inputs.rejectBottles.value) || 0);
-    items.forEach((r) => { if (r.auto && r.setQty) r.setQty(n || ''); });
+    const scaled = (per) => { const v = n * per; return v >= 10 ? Math.round(v) : Math.round(v * 100) / 100; };
+    items.forEach((r) => { if (r.auto && r.per > 0 && r.setQty) r.setQty(n ? scaled(r.per) : ''); });
     update();
   };
   inputs.goodBottles.addEventListener('input', autoFill);
@@ -165,7 +166,7 @@ function openBatchForm(batch, ctx) {
       };
       sel.addEventListener('change', () => {
         const m = ctx.data.materials.find((x) => x.id === sel.value);
-        if (m) { Object.assign(row, { materialId: m.id, name: m.name, unit: m.unit, price: m.tracked ? m.avgCost : m.price }); price.value = row.price; syncTracked(); refreshSub(); }
+        if (m) { Object.assign(row, { materialId: m.id, name: m.name, unit: m.unit, price: m.tracked ? m.avgCost : m.price, per: m.perBottle || 0, auto: (m.perBottle || 0) > 0 }); price.value = row.price; syncTracked(); autoFill(); }
       });
       syncTracked();
       refreshSub();
@@ -190,8 +191,8 @@ function openBatchForm(batch, ctx) {
 
   const content = h('div', {},
     top,
-    h('div', { class: 'lines' }, h('h3', {}, 'Bahan yang dipakai'), h('p', { class: 'muted', style: 'margin:-4px 0 8px' }, 'Isi jumlah kelapa. Botol, tutup, dan label terisi otomatis dari jumlah botol.'), itemsBox,
-      h('button', { type: 'button', class: 'btn small', onclick: () => { const m = ctx.data.materials[0]; items.push({ materialId: m ? m.id : '', name: m ? m.name : '', unit: m ? m.unit : '', qty: '', price: m ? (m.tracked ? m.avgCost : m.price) : 0 }); drawItems(); } }, 'Tambah bahan')),
+    h('div', { class: 'lines' }, h('h3', {}, 'Bahan yang dipakai'), h('p', { class: 'muted', style: 'margin:-4px 0 8px' }, 'Bahan yang jumlah per botolnya sudah diisi (di menu Bahan) terisi otomatis dari jumlah botol. Boleh diubah.'), itemsBox,
+      h('button', { type: 'button', class: 'btn small', onclick: () => { const m = ctx.data.materials[0]; items.push({ materialId: m ? m.id : '', name: m ? m.name : '', unit: m ? m.unit : '', qty: '', price: m ? (m.tracked ? m.avgCost : m.price) : 0, per: m ? m.perBottle || 0 : 0, auto: !!(m && m.perBottle > 0) }); drawItems(); } }, 'Tambah bahan')),
     h('div', { class: 'lines' }, h('h3', {}, 'Biaya lain (tenaga kerja, gas, ongkir, dll)'), costsBox,
       h('datalist', { id: 'dl_costs' }, COST_SUGGESTIONS.map((s) => h('option', { value: s }))),
       h('button', { type: 'button', class: 'btn small', onclick: () => { costs.push({ name: '', amount: '' }); drawCosts(); } }, 'Tambah biaya')),

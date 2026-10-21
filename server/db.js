@@ -8,7 +8,7 @@ const FILE = process.env.DATA_FILE || path.join(__dirname, '..', 'data', 'db.jso
 const COLLECTIONS = ['materials', 'partners', 'batches', 'deliveries', 'sales', 'returns', 'expirations', 'expenses', 'reminders', 'purchases', 'stockouts', 'capital'];
 
 function defaults() {
-  const mat = (name, unit, perBottle = false) => ({ id: crypto.randomUUID(), name, unit, price: 0, note: '', perBottle, createdAt: new Date().toISOString() });
+  const mat = (name, unit, perBottle = 0) => ({ id: crypto.randomUUID(), name, unit, price: 0, note: '', perBottle, createdAt: new Date().toISOString() });
   return {
     settings: {
       businessName: 'Air Kelapa Saya',
@@ -23,7 +23,7 @@ function defaults() {
       notifUnpaid: true,
       notifUnpaidDays: 3,
     },
-    materials: [mat('Kelapa', 'butir'), mat('Botol', 'pcs', true), mat('Tutup botol', 'pcs', true), mat('Label / stiker', 'pcs', true)],
+    materials: [mat('Kelapa', 'butir'), mat('Botol', 'pcs', 1), mat('Tutup botol', 'pcs', 1), mat('Label / stiker', 'pcs', 1)],
     partners: [], batches: [], deliveries: [], sales: [], returns: [], expirations: [], expenses: [], reminders: [], purchases: [], stockouts: [], capital: [],
   };
 }
