@@ -13,7 +13,9 @@ Lalu buka http://localhost:3000. Server harus tetap jalan selama aplikasi dipaka
 
 ## Dipakai di HP dan iPad
 
-Tampilan menyesuaikan otomatis: laptop (menu di kiri), iPad landscape (menu kiri lebih ramping), iPad portrait dan HP (menu lewat tombol hamburger di kanan atas, daftar jadi kartu per baris, form jadi lembar dari bawah).
+Tampilan menyesuaikan otomatis: laptop (menu di kiri), iPad landscape (menu kiri lebih ramping), iPad portrait dan HP (menu lewat tombol hamburger di kiri atas, daftar jadi kartu per baris, form jadi lembar dari bawah).
+
+Di HP aplikasi hanya dipakai **tegak (vertikal)**. Kalau HP dimiringkan, muncul layar "Putar HP ke posisi tegak". Aplikasi yang dipasang ke Layar Utama juga meminta kunci tegak ke sistem (Android). iPad dan laptop tidak terpengaruh.
 
 Untuk membuka dari HP atau iPad di WiFi yang sama dengan laptop:
 1. Jalankan `npm start` di laptop.

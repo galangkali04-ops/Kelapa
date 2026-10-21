@@ -1,5 +1,5 @@
 // Beranda: angka hari ini, stok bahan, botol, dan botol yang masih di mart. Semua dalam satu layar.
-import { h, rp, rpd, int, fmtDate, dataTable, pageHeader } from '../ui.js';
+import { h, rp, rpd, int, fmtDate, dataTable, pageHeader, setChildren } from '../ui.js';
 import { api } from '../api.js';
 
 const stat = (value, label, bad) => h('div', { class: `stat${bad ? ' bad' : ''}` }, h('div', { class: 'v' }, value), h('div', { class: 'l' }, label));
@@ -52,7 +52,7 @@ export async function renderHome(root, page, ctx) {
     { key: 'since', label: 'Order tertua', render: (r) => fmtDate(r.since) },
   ];
 
-  root.replaceChildren(
+  setChildren(root, 
     pageHeader('Beranda', `${dateLabel}`),
     quick, ...(alerts ? [alerts] : []), money, bottles,
     h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Stok bahan'),

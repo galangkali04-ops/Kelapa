@@ -1,6 +1,6 @@
 // Mart: semua urusan mart dalam satu halaman. Mart bayar saat order berikutnya, jadi hasil nota lama
 // dan order baru diisi bersamaan. Di bawahnya ada riwayat untuk koreksi.
-import { h, rp, int, fmtDate, today, pageHeader, openDialog, closeDialog, toast, dataTable } from '../ui.js';
+import { h, rp, int, fmtDate, today, pageHeader, openDialog, closeDialog, toast, dataTable, setChildren } from '../ui.js';
 import { api } from '../api.js';
 import { DEF } from '../config.js';
 import { openForm, removeRow } from '../crudkit.js';
@@ -82,7 +82,7 @@ export function renderVisit(root, page, ctx) {
   function draw() {
     const partner = partners.find((p) => p.id === state.partnerId);
     if (!partner) {
-      body.replaceChildren(
+      setChildren(body, 
         partners.length
           ? h('section', { class: 'panel' }, h('h2', {}, 'Pilih mart'),
             h('div', { class: 'mart-list' }, partners.map((p) => h('button', { class: 'mart-item', type: 'button', onclick: () => choose(p.id) },
@@ -109,7 +109,7 @@ export function renderVisit(root, page, ctx) {
       const handled = state.sold + state.returnedGood + state.returnedBad + state.expired;
       const over = handled > totalOpen;
       const after = totalOpen - handled + state.newQty;
-      summary.replaceChildren(
+      setChildren(summary, 
         open.length ? h('div', { class: 'kv total' }, h('span', {}, `${state.paid ? 'Uang diterima' : 'Tagihan belum dibayar'} (${int(state.sold)} laku)`), h('span', {}, rp(bill))) : null,
         state.newQty > 0 ? h('div', { class: 'kv' }, h('span', {}, 'Nilai order baru'), h('span', {}, rp(state.newQty * (Number(state.newPrice) || 0)))) : null,
         h('div', { class: 'kv' }, h('span', {}, 'Botol di mart setelah ini'), h('span', {}, `${int(Math.max(0, after))} botol`)));
@@ -133,7 +133,7 @@ export function renderVisit(root, page, ctx) {
       } catch (e) { err.textContent = e.message; refresh(); }
     });
 
-    body.replaceChildren(
+    setChildren(body, 
       h('div', { class: 'row-actions', style: 'margin-bottom:12px' },
         h('button', { class: 'btn small', type: 'button', onclick: () => choose('') }, 'Ganti mart'),
         h('button', { class: 'btn small', type: 'button', onclick: () => openForm(DEF.partners, partner, ctx) }, 'Ubah mart'),
@@ -167,7 +167,7 @@ export function renderVisit(root, page, ctx) {
       h('div', { class: 'form-actions' }, h('button', { class: 'btn primary', type: 'button', onclick: closeDialog }, 'Selesai'))));
   }
 
-  root.replaceChildren(
+  setChildren(root, 
     pageHeader('Mart', 'Mart bayar saat order berikutnya. Pilih mart, isi hasil nota sebelumnya, lalu isi order barunya.',
       h('button', { class: 'btn primary', type: 'button', onclick: newPartner }, 'Mart baru')),
     ...(partners.length ? [h('section', { class: 'panel' }, h('div', { class: 'fields' }, field('Mart', pick), field('Tanggal', dateEl)))] : []),

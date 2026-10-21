@@ -3,6 +3,7 @@
   "short_name": "Air Kelapa",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#12352f",
   "theme_color": "#12352f",
   "lang": "id",

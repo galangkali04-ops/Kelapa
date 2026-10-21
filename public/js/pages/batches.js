@@ -1,5 +1,5 @@
 // Produksi per batch: input bahan & biaya, hitung total modal dan HPP per botol.
-import { h, rp, int, fmtDate, today, daysBetween, dataTable, pageHeader, formShell, formDialog, buildFields, confirmBox, openDialog, closeDialog, toast } from '../ui.js';
+import { h, rp, int, fmtDate, today, daysBetween, dataTable, pageHeader, formShell, formDialog, buildFields, confirmBox, openDialog, closeDialog, toast, setChildren } from '../ui.js';
 import { api } from '../api.js';
 
 const COST_SUGGESTIONS = ['Tenaga kerja', 'Gas / listrik', 'Ongkos kirim', 'Es batu', 'Dus / kemasan', 'Sewa tempat'];
@@ -61,7 +61,7 @@ export function renderBatches(root, page, ctx) {
       ` (rata-rata ${used.length} batch). Untuk 100 botol siapkan sekitar ${Math.ceil(100 * totalCoconuts / totalBottles)} kelapa.`)
     : null;
 
-  root.replaceChildren(
+  setChildren(root, 
     pageHeader('Produksi', 'Isi botol jadi dan kelapa yang dipakai. Botol, tutup, dan label terisi otomatis, HPP per botol dihitung sendiri.',
       h('button', { class: 'btn primary', onclick: () => openBatchForm(null, ctx) }, 'Tambah batch')),
     ...(yieldInfo ? [yieldInfo] : []),
@@ -138,7 +138,7 @@ function openBatchForm(batch, ctx) {
     });
     const other = costs.reduce((s, c) => s + (Number(c.amount) || 0), 0);
     if (other > 0) rows.push(h('div', { class: 'kv' }, h('span', {}, 'Biaya lain'), h('span', {}, good > 0 ? `${rp(other / good)} / botol` : rp(other))));
-    breakdown.replaceChildren(...(rows.length ? [h('h3', {}, good > 0 ? `Biaya per botol (dibagi ${int(good)} botol jadi)` : 'Isi botol jadi untuk melihat biaya per botol'), ...rows] : []));
+    setChildren(breakdown, ...(rows.length ? [h('h3', {}, good > 0 ? `Biaya per botol (dibagi ${int(good)} botol jadi)` : 'Isi botol jadi untuk melihat biaya per botol'), ...rows] : []));
   };
   inputs.goodBottles.addEventListener('input', update);
 
@@ -148,7 +148,7 @@ function openBatchForm(batch, ctx) {
   };
 
   function drawItems() {
-    itemsBox.replaceChildren(h('div', { class: 'line head' }, h('span', {}, 'Bahan'), h('span', {}, 'Jumlah'), h('span', {}, 'Harga satuan'), h('span', { style: 'text-align:right' }, 'Subtotal'), h('span')));
+    setChildren(itemsBox, h('div', { class: 'line head' }, h('span', {}, 'Bahan'), h('span', {}, 'Jumlah'), h('span', {}, 'Harga satuan'), h('span', { style: 'text-align:right' }, 'Subtotal'), h('span')));
     items.forEach((row, idx) => {
       const sel = h('select', { 'aria-label': 'Bahan' });
       for (const m of ctx.data.materials) sel.append(h('option', { value: m.id }, m.name));

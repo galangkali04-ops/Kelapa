@@ -1,5 +1,5 @@
 // Halaman daftar + form tambah/ubah/hapus yang dibuat otomatis dari config.js.
-import { h, dataTable, pageHeader, formDialog, confirmBox, toast } from '../ui.js';
+import { h, dataTable, pageHeader, formDialog, confirmBox, toast, setChildren } from '../ui.js';
 import { api } from '../api.js';
 
 export function renderCrud(root, page, ctx) {
@@ -28,7 +28,7 @@ export function renderCrud(root, page, ctx) {
     } catch (e) { toast(e.message, 'error'); }
   }
 
-  root.replaceChildren(
+  setChildren(root, 
     pageHeader(page.label, page.intro, ...(page.links || []).map((l) => h('a', { class: 'btn', href: l.href }, l.label)), add),
     h('div', { class: 'panel flush' },
       dataTable(page.columns, rows, {

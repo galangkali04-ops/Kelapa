@@ -261,7 +261,12 @@ export function dataTable(columns, rows, { actions, emptyText = 'Belum ada data.
     h('thead', {}, h('tr', {}, columns.map((c) => h('th', { class: cls(c) }, c.label)), actions ? h('th', {}) : null)),
     h('tbody', {}, rows.map((r) => h('tr', {},
       columns.map((c) => h('td', { class: cls(c), 'data-label': c.label }, cell(c, r))),
-      actions ? h('td', { class: 'actions' }, actions(r)) : null)))));
+      actions ? h('td', { class: 'actions' }, h('div', { class: 'cell-actions' }, actions(r))) : null)))));
+}
+
+// Ganti isi elemen. Nilai kosong (null/false) dibuang, karena replaceChildren akan menuliskannya sebagai teks "null".
+export function setChildren(el, ...kids) {
+  el.replaceChildren(...kids.flat(Infinity).filter((k) => k != null && k !== false));
 }
 
 export function pageHeader(title, intro, ...actions) {

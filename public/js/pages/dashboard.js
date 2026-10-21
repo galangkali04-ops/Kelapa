@@ -1,5 +1,5 @@
 // Ringkasan: laporan laba, angka botol, pengeluaran per kategori, per mitra, per batch, grafik.
-import { h, rp, int, pct, fmtDate, dataTable, pageHeader, trendChart } from '../ui.js';
+import { h, rp, int, pct, fmtDate, dataTable, pageHeader, trendChart, setChildren } from '../ui.js';
 import { api } from '../api.js';
 
 // Tabel rinci disembunyikan dulu supaya laporan tidak ramai. Klik judulnya untuk membuka.
@@ -89,7 +89,7 @@ export async function renderDashboard(root, page, ctx) {
     { key: 'stockTotal', label: 'Sisa stok', type: 'int' }, { key: 'revenue', label: 'Revenue', type: 'rp' }, { key: 'grossProfit', label: 'Gross profit', type: 'rp' },
   ];
 
-  root.replaceChildren(
+  setChildren(root, 
     pageHeader(`Laporan ${ctx.settings.businessName || ''}`.trim(), 'Untung rugi sesuai periode. Belanja bahan tidak mengurangi profit saat dibeli, tapi saat bahannya terpakai di batch.', filters),
     ...(alerts ? [alerts] : []), ledger, stats,
     fold('Pengeluaran per kategori', dataTable(categoryCols, rep.perCategory, { emptyText: 'Belum ada pengeluaran pada periode ini.' })),

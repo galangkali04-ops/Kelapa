@@ -1,5 +1,5 @@
 // Pengaturan usaha, backup, dan restore data.
-import { h, pageHeader, buildFields, toast, confirmBox, openDialog, closeDialog } from '../ui.js';
+import { h, pageHeader, buildFields, toast, confirmBox, openDialog, closeDialog, setChildren } from '../ui.js';
 import { api } from '../api.js';
 import { deviceSupport, requestDevicePermission, sendTestNotification, clearNotificationHistory } from '../notify.js';
 
@@ -66,7 +66,7 @@ export function renderSettings(root, page, ctx) {
   test.addEventListener('click', async () => { const ok = await sendTestNotification(); toast(ok ? 'Notifikasi tes dikirim' : 'Notifikasi tidak bisa ditampilkan', ok ? '' : 'error'); });
   syncDevice();
 
-  root.replaceChildren(
+  setChildren(root, 
     pageHeader('Pengaturan'),
     h('div', { class: 'panel' }, form,
       h('div', { class: 'settings-block' }, h('h2', {}, 'Pengingat'),

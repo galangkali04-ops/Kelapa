@@ -1,5 +1,5 @@
 // Belanja: stok bahan sekarang, tombol catat belanja / bahan terbuang / bahan baru, dan riwayatnya dalam satu halaman.
-import { h, rp, rpd, int, dataTable, pageHeader, toast } from '../ui.js';
+import { h, rp, rpd, int, dataTable, pageHeader, toast, setChildren } from '../ui.js';
 import { api } from '../api.js';
 import { DEF } from '../config.js';
 import { openForm, removeRow } from '../crudkit.js';
@@ -50,7 +50,7 @@ export function renderStock(root, page, ctx) {
     { key: 'amount', label: 'Rp', type: 'rp' },
   ];
 
-  root.replaceChildren(
+  setChildren(root, 
     pageHeader('Bahan & belanja', page.intro,
       h('button', { class: 'btn primary', onclick: add(DEF.purchases) }, 'Belanja bahan'),
       h('button', { class: 'btn', onclick: add(DEF.stockouts) }, 'Buang / rusak'),
