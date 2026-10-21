@@ -25,7 +25,7 @@ const ALL = [
 
   {
     id: 'purchases', label: 'Bahan', type: 'stock', collection: 'purchases', singular: 'belanja',
-    intro: 'Daftar bahan yang dibutuhkan untuk 1 botol, lengkap dengan harga per pcs. Isi langsung di tabel. Catat belanja supaya stok dan harga rata-rata terisi sendiri.',
+    intro: 'Daftar bahan beserta harga per pcs. Isi harganya langsung di tabel. Catat belanja supaya stok dan harga rata-rata terisi sendiri.',
     columns: [
       { key: 'date', label: 'Tanggal', type: 'date' },
       { key: 'materialName', label: 'Bahan' },
@@ -126,7 +126,6 @@ const ALL = [
       { key: 'name', label: 'Nama bahan', type: 'text', required: true, placeholder: 'Mis. Kelapa muda' },
       { key: 'unit', label: 'Satuan', type: 'text', suggest: ['butir', 'pcs', 'kg', 'liter', 'dus'], placeholder: 'butir, pcs, kg…' },
       { key: 'price', label: 'Harga per pcs / satuan (Rp)', type: 'money', default: 0, help: 'Mis. kelapa 7000. Kalau belanjanya sudah rutin dicatat, harga rata-rata dari belanja yang dipakai.' },
-      { key: 'perBottle', label: 'Dipakai per botol', type: 'number', default: 0, help: 'Mis. botol 1, tutup 1, kelapa 0,85. Di Produksi jumlahnya terisi otomatis dari botol jadi. Kosongkan kalau tidak dipakai per botol.' },
       { key: 'note', label: 'Catatan', type: 'text' },
     ],
   },

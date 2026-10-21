@@ -215,7 +215,7 @@ function list(db, col) {
   switch (col) {
     case 'materials': return db.materials.slice().sort((a, b) => a.name.localeCompare(b.name)).map((m) => {
       const s = c.inv.mats.get(m.id);
-      return { ...m, perBottle: typeof m.perBottle === 'number' ? m.perBottle : (m.perBottle === true || (m.perBottle === undefined && /botol|tutup|label|stiker/i.test(m.name)) ? 1 : 0), tracked: s.tracked, stockQty: s.tracked ? Math.round(s.qty * 100) / 100 : null, avgCost: s.tracked ? s.avg : num(m.price), stockValue: s.tracked ? Math.max(0, s.value) : 0 };
+      return { ...m, tracked: s.tracked, stockQty: s.tracked ? Math.round(s.qty * 100) / 100 : null, avgCost: s.tracked ? s.avg : num(m.price), stockValue: s.tracked ? Math.max(0, s.value) : 0 };
     });
     case 'partners': return [...c.partners.values()].sort((a, b) => a.name.localeCompare(b.name));
     case 'batches': return [...c.batches.values()].sort(byDateDesc);

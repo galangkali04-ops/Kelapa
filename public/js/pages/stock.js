@@ -9,19 +9,10 @@ const badge = (text, cls = '') => h('span', { class: `badge ${cls}` }, text);
 export function renderStock(root, page, ctx) {
   const add = (def) => () => openForm(def, null, ctx);
 
-  const per = (m) => Number(m.perBottle) || 0;
-  const unitPrice = (m) => (m.tracked ? m.avgCost : Number(m.price) || 0);
-  const costPerBottle = ctx.data.materials.reduce((sum, m) => sum + per(m) * unitPrice(m), 0);
-  const fmt2 = (n) => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
-
-  // Saran jumlah kelapa per botol dari batch yang sudah ada (total kelapa dibagi total botol jadi).
-  const used = ctx.data.batches.map((b) => ({ bottles: Number(b.goodBottles) || 0, coco: (b.items || []).filter((i) => /kelapa/i.test(i.name)).reduce((x, i) => x + (Number(i.qty) || 0), 0) })).filter((x) => x.coco > 0 && x.bottles > 0);
-  const suggestion = used.length ? Math.round((used.reduce((x, u) => x + u.coco, 0) / used.reduce((x, u) => x + u.bottles, 0)) * 100) / 100 : 0;
-
-  // Simpan satu perubahan langsung dari tabel (harga per pcs atau jumlah per botol).
+  // Simpan harga per pcs langsung dari tabel.
   async function patch(m, changes) {
     try {
-      await api(`/materials/${m.id}`, { method: 'PUT', body: { name: m.name, unit: m.unit, price: Number(m.price) || 0, perBottle: per(m), note: m.note || '', ...changes } });
+      await api(`/materials/${m.id}`, { method: 'PUT', body: { name: m.name, unit: m.unit, price: Number(m.price) || 0, note: m.note || '', ...changes } });
       toast('Tersimpan');
       await ctx.refresh();
     } catch (e) { toast(e.message, 'error'); }
@@ -37,10 +28,6 @@ export function renderStock(root, page, ctx) {
     { key: 'price', label: 'Harga per pcs (Rp)', render: (m) => (m.tracked
       ? h('span', {}, `${rpd(m.avgCost)}${m.unit ? ` / ${m.unit}` : ''} `, h('span', { class: 'muted' }, '(rata-rata belanja)'))
       : editCell(m, 'price', 'harga per pcs', m.unit ? `/ ${m.unit}` : '')) },
-    { key: 'perBottle', label: 'Dipakai per botol', render: (m) => h('span', {}, editCell(m, 'perBottle', 'jumlah per botol', m.unit || ''),
-      !per(m) && suggestion > 0 && /kelapa/i.test(m.name)
-        ? h('button', { class: 'btn small', type: 'button', style: 'margin-top:6px', onclick: () => patch(m, { perBottle: suggestion }) }, `Pakai ${fmt2(suggestion)} (dari batch)`) : null) },
-    { key: 'cost', label: 'Modal per botol', render: (m) => (per(m) > 0 ? rpd(per(m) * unitPrice(m)) : '—') },
     { key: 'stockQty', label: 'Stok', render: (m) => (m.tracked ? `${int(m.stockQty)} ${m.unit || ''}`.trim() : h('span', { class: 'muted' }, 'belum ada belanja')) },
   ];
 
@@ -68,10 +55,8 @@ export function renderStock(root, page, ctx) {
       h('button', { class: 'btn primary', onclick: add(DEF.purchases) }, 'Belanja bahan'),
       h('button', { class: 'btn', onclick: add(DEF.stockouts) }, 'Buang / rusak'),
       h('button', { class: 'btn', onclick: add(DEF.materials) }, 'Bahan baru')),
-    h('p', { class: 'yield-note' }, costPerBottle > 0
-      ? [h('b', {}, `Modal bahan per botol ≈ ${rpd(costPerBottle)}`), ' (jumlah per botol × harga per pcs, belum termasuk gas, tenaga, dan biaya lain di Produksi).']
-      : 'Isi harga per pcs dan jumlah per botol di tabel untuk melihat perkiraan modal bahan per botol.'),
-    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Bahan yang dibutuhkan')),
+    h('p', { class: 'yield-note' }, 'Di Produksi, tulis jumlah bahan yang benar-benar terpakai (mis. kelapa). Biaya per botol = jumlah × harga per pcs ÷ botol jadi.'),
+    h('section', { class: 'panel flush' }, h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Bahan dan harga')),
       dataTable(stockCols, ctx.data.materials, {
         stack: true, emptyText: 'Belum ada bahan.',
         actions: (m) => [

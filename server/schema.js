@@ -6,7 +6,6 @@ const schemas = {
     name: { t: 'str', req: true, label: 'Nama bahan' },
     unit: { t: 'str', label: 'Satuan' },
     price: { t: 'num0', label: 'Harga per satuan' },
-    perBottle: { t: 'num0', label: 'Jumlah per botol' },
     note: { t: 'str', label: 'Catatan' },
   },
   partners: {

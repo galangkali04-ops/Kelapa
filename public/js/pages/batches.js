@@ -118,11 +118,12 @@ function openBatchForm(batch, ctx) {
   // Batch baru: semua bahan langsung muncul sebagai baris, tinggal isi jumlah.
   const items = isEdit
     ? batch.items.map((i) => ({ ...i }))
-    : ctx.data.materials.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: m.tracked ? m.avgCost : m.price, per: m.perBottle || 0, auto: (m.perBottle || 0) > 0 }));
+    : ctx.data.materials.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: m.tracked ? m.avgCost : m.price }));
   const costs = isEdit ? batch.costs.map((c) => ({ ...c })) : [];
 
   const itemsBox = h('div'); const costsBox = h('div');
   const totalEl = h('strong'); const hppEl = h('strong');
+  const breakdown = h('div', { class: 'breakdown' });
 
   const update = () => {
     const total = items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.price) || 0), 0)
@@ -130,16 +131,16 @@ function openBatchForm(batch, ctx) {
     const good = Number(inputs.goodBottles.value) || 0;
     totalEl.textContent = rp(total);
     hppEl.textContent = good > 0 ? rp(total / good) : '—';
+    // Rincian: tiap bahan = jumlah x harga, lalu dibagi botol jadi
+    const rows = items.filter((i) => Number(i.qty) > 0).map((i) => {
+      const sub = (Number(i.qty) || 0) * (Number(i.price) || 0);
+      return h('div', { class: 'kv' }, h('span', {}, `${i.name}: ${Number(i.qty)} × ${rp(Number(i.price) || 0)} = ${rp(sub)}`), h('span', {}, good > 0 ? `${rp(sub / good)} / botol` : ''));
+    });
+    const other = costs.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    if (other > 0) rows.push(h('div', { class: 'kv' }, h('span', {}, 'Biaya lain'), h('span', {}, good > 0 ? `${rp(other / good)} / botol` : rp(other))));
+    breakdown.replaceChildren(...(rows.length ? [h('h3', {}, good > 0 ? `Biaya per botol (dibagi ${int(good)} botol jadi)` : 'Isi botol jadi untuk melihat biaya per botol'), ...rows] : []));
   };
-  // Bahan "dipakai 1 per botol" (botol, tutup, label) terisi otomatis = botol jadi + botol gagal, kecuali diubah manual.
-  const autoFill = () => {
-    const n = (Number(inputs.goodBottles.value) || 0) + (Number(inputs.rejectBottles.value) || 0);
-    const scaled = (per) => { const v = n * per; return v >= 10 ? Math.round(v) : Math.round(v * 100) / 100; };
-    items.forEach((r) => { if (r.auto && r.per > 0 && r.setQty) r.setQty(n ? scaled(r.per) : ''); });
-    update();
-  };
-  inputs.goodBottles.addEventListener('input', autoFill);
-  inputs.rejectBottles.addEventListener('input', autoFill);
+  inputs.goodBottles.addEventListener('input', update);
 
   const numInput = (value, onInput, ph) => {
     const el = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', placeholder: ph });
@@ -166,12 +167,11 @@ function openBatchForm(batch, ctx) {
       };
       sel.addEventListener('change', () => {
         const m = ctx.data.materials.find((x) => x.id === sel.value);
-        if (m) { Object.assign(row, { materialId: m.id, name: m.name, unit: m.unit, price: m.tracked ? m.avgCost : m.price, per: m.perBottle || 0, auto: (m.perBottle || 0) > 0 }); price.value = row.price; syncTracked(); autoFill(); }
+        if (m) { Object.assign(row, { materialId: m.id, name: m.name, unit: m.unit, price: m.tracked ? m.avgCost : m.price }); price.value = row.price; syncTracked(); refreshSub(); }
       });
       syncTracked();
       refreshSub();
-      const qtyEl = numInput(row.qty, (v) => { row.qty = v; row.auto = false; refreshSub(); }, mat() && mat().tracked ? `stok ${mat().stockQty}` : (row.unit || 'Jumlah'));
-      row.setQty = (v) => { row.qty = v; qtyEl.value = v; refreshSub(); };
+      const qtyEl = numInput(row.qty, (v) => { row.qty = v; refreshSub(); }, mat() && mat().tracked ? `stok ${mat().stockQty}` : (row.unit || 'Jumlah'));
       itemsBox.append(h('div', { class: 'line' }, sel, qtyEl, price, sub,
         h('button', { type: 'button', class: 'btn small', 'aria-label': 'Hapus baris', onclick: () => { items.splice(idx, 1); drawItems(); } }, '✕')));
     });
@@ -191,11 +191,12 @@ function openBatchForm(batch, ctx) {
 
   const content = h('div', {},
     top,
-    h('div', { class: 'lines' }, h('h3', {}, 'Bahan yang dipakai'), h('p', { class: 'muted', style: 'margin:-4px 0 8px' }, 'Bahan yang jumlah per botolnya sudah diisi (di menu Bahan) terisi otomatis dari jumlah botol. Boleh diubah.'), itemsBox,
-      h('button', { type: 'button', class: 'btn small', onclick: () => { const m = ctx.data.materials[0]; items.push({ materialId: m ? m.id : '', name: m ? m.name : '', unit: m ? m.unit : '', qty: '', price: m ? (m.tracked ? m.avgCost : m.price) : 0, per: m ? m.perBottle || 0 : 0, auto: !!(m && m.perBottle > 0) }); drawItems(); } }, 'Tambah bahan')),
+    h('div', { class: 'lines' }, h('h3', {}, 'Bahan yang dipakai'), h('p', { class: 'muted', style: 'margin:-4px 0 8px' }, 'Isi jumlah yang benar-benar terpakai. Biaya per botol = jumlah × harga per pcs ÷ botol jadi.'), itemsBox,
+      h('button', { type: 'button', class: 'btn small', onclick: () => { const m = ctx.data.materials[0]; items.push({ materialId: m ? m.id : '', name: m ? m.name : '', unit: m ? m.unit : '', qty: '', price: m ? (m.tracked ? m.avgCost : m.price) : 0 }); drawItems(); } }, 'Tambah bahan')),
     h('div', { class: 'lines' }, h('h3', {}, 'Biaya lain (tenaga kerja, gas, ongkir, dll)'), costsBox,
       h('datalist', { id: 'dl_costs' }, COST_SUGGESTIONS.map((s) => h('option', { value: s }))),
       h('button', { type: 'button', class: 'btn small', onclick: () => { costs.push({ name: '', amount: '' }); drawCosts(); } }, 'Tambah biaya')),
+    breakdown,
     h('div', { class: 'preview' }, h('span', {}, 'Total modal: ', totalEl), h('span', {}, 'HPP per botol: ', hppEl)));
 
   formShell({
