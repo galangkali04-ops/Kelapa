@@ -34,6 +34,10 @@ Tips: di HP, pilih "Tambahkan ke Layar Utama" di menu browser agar muncul sepert
 
 Data lama tidak hilang. Koleksi `expenses` dan kategori pengeluaran dibuat otomatis kalau belum ada.
 
+### Ikon aplikasi (logo DEWA)
+Logo ada di `public/icons/` (`icon-180.png` untuk iPhone/iPad, `icon-192.png` dan `icon-512.png` untuk Android, `favicon-32.png` untuk tab browser). Nama di bawah ikon diatur di `public/manifest.webmanifest` (`short_name`, sekarang "DEWA"). Untuk mengganti logo, timpa file-file itu dengan gambar persegi berukuran persis sama.
+Ikon hanya dibaca saat aplikasi ditambahkan ke Layar Utama. Kalau sebelumnya sudah ditambahkan dengan ikon lama, hapus dulu ikonnya lalu tambahkan lagi.
+
 ## Mulai dari awal (reset data)
 
 Buka **Pengaturan**, scroll ke **Mulai dari awal**. Ada dua pilihan:

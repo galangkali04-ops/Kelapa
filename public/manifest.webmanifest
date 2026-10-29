@@ -1,14 +1,14 @@
 {
-  "name": "Kelola Air Kelapa",
-  "short_name": "Air Kelapa",
+  "name": "DEWA Fresh Coconut Water",
+  "short_name": "DEWA",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#12352f",
+  "background_color": "#ffffff",
   "theme_color": "#12352f",
   "lang": "id",
   "icons": [
-    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
   ]
 }
