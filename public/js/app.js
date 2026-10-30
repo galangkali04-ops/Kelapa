@@ -1,6 +1,6 @@
 // Router sederhana: menghubungkan menu (config.js) dengan halaman (pages/*).
 import { PAGES } from './config.js';
-import { loadAll } from './api.js';
+import { loadAll, logout } from './api.js';
 import { h, closeDialog } from './ui.js';
 import { renderDashboard } from './pages/dashboard.js';
 import { renderBatches } from './pages/batches.js';
@@ -48,7 +48,8 @@ async function route() {
   }
 }
 
-nav.append(...PAGES.filter((p) => !p.hidden).map((p) => h('a', { href: `#/${p.id}`, 'data-id': p.id }, p.label)));
+nav.append(...PAGES.filter((p) => !p.hidden).map((p) => h('a', { href: `#/${p.id}`, 'data-id': p.id }, p.label)),
+  h('button', { class: 'nav-logout', type: 'button', onclick: logout }, 'Keluar'));
 // Di HP aplikasi dipakai tegak. Dikunci kalau browser mengizinkan (aplikasi terpasang); selain itu muncul peringatan lewat CSS.
 try { screen.orientation.lock('portrait').catch(() => {}); } catch { /* tidak didukung */ }
 initMenu({ btn: document.getElementById('menuBtn'), nav, scrim: document.getElementById('scrim') });

@@ -8,8 +8,13 @@ export async function api(path, { method = 'GET', body } = {}) {
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   const json = await res.json().catch(() => ({}));
+  if (res.status === 401 && json.login) { location.replace(`/login.html${location.hash}`); throw new Error(json.error); } // sesi berakhir
   if (!res.ok) throw new Error(json.error || 'Terjadi kesalahan. Coba lagi.');
   return json;
+}
+
+export async function logout() {
+  try { await fetch('/api/auth/logout', { method: 'POST' }); } finally { location.replace('/login.html'); }
 }
 
 export async function loadAll() {

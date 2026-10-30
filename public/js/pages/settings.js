@@ -1,6 +1,7 @@
 // Pengaturan usaha, backup, dan restore data.
 import { h, pageHeader, buildFields, toast, confirmBox, openDialog, closeDialog, setChildren } from '../ui.js';
-import { api } from '../api.js';
+import { api, logout } from '../api.js';
+import { passwordField } from '../password-field.js';
 import { deviceSupport, requestDevicePermission, sendTestNotification, clearNotificationHistory } from '../notify.js';
 
 export function renderSettings(root, page, ctx) {
@@ -21,6 +22,31 @@ export function renderSettings(root, page, ctx) {
     try { await api('/restore', { method: 'POST', body: JSON.parse(await f.text()) }); toast('Data dipulihkan'); await ctx.refresh(); } catch (ex) { toast(ex.message || 'File tidak bisa dibaca', 'error'); }
     file.value = '';
   });
+
+  // Ganti sandi: sandi lama + sandi baru dua kali, masing-masing punya tombol mata.
+  async function askChangePassword() {
+    const st = await (await fetch('/api/auth/status')).json().catch(() => ({}));
+    const cur = passwordField({ id: 'pwCur', label: 'Sandi lama', autocomplete: 'current-password' });
+    const nxt = passwordField({ id: 'pwNew', label: `Sandi baru (minimal ${st.minLength || 6} karakter)`, autocomplete: 'new-password' });
+    const rep = passwordField({ id: 'pwRep', label: 'Ulangi sandi baru', autocomplete: 'new-password' });
+    const err = h('p', { class: 'form-error', role: 'alert' });
+    const go = h('button', { class: 'btn primary', type: 'submit' }, 'Simpan sandi');
+    const form = h('form', { class: 'fields', style: 'grid-template-columns:1fr', novalidate: true }, cur.node, nxt.node, rep.node, err,
+      h('div', { class: 'form-actions' }, h('button', { class: 'btn', type: 'button', onclick: closeDialog }, 'Batal'), go));
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault(); err.textContent = '';
+      if (nxt.input.value !== rep.input.value) { err.textContent = 'Ulangi sandi tidak sama.'; rep.input.focus(); return; }
+      go.disabled = true;
+      try {
+        await api('/auth/password', { method: 'POST', body: { current: cur.input.value, next: nxt.input.value, confirm: rep.input.value } });
+        closeDialog();
+        toast('Sandi diganti. Perangkat lain perlu masuk lagi.', '', 6000);
+      } catch (ex) { err.textContent = ex.message; go.disabled = false; }
+    });
+    openDialog(h('div', { class: 'dialog-body' }, h('h2', {}, 'Ganti sandi'),
+      st.managedByEnv ? h('p', { class: 'muted' }, 'Sandi diatur lewat APP_PASSWORD di server, jadi tidak bisa diganti dari sini.') : form));
+    cur.input.focus();
+  }
 
   // Mulai dari awal: wajib mengetik HAPUS, dan server menyimpan salinan otomatis sebelum menghapus.
   function askReset(mode) {
@@ -69,6 +95,11 @@ export function renderSettings(root, page, ctx) {
   setChildren(root, 
     pageHeader('Pengaturan'),
     h('div', { class: 'panel' }, form,
+      h('div', { class: 'settings-block' }, h('h2', {}, 'Keamanan'),
+        h('p', {}, 'Aplikasi terkunci dengan sandi. Dengan "Ingat saya 30 hari", perangkat tidak perlu memasukkan sandi lagi selama 30 hari.'),
+        h('div', { class: 'row-actions' },
+          h('button', { class: 'btn', type: 'button', onclick: askChangePassword }, 'Ganti sandi'),
+          h('button', { class: 'btn', type: 'button', onclick: logout }, 'Keluar dari perangkat ini'))),
       h('div', { class: 'settings-block' }, h('h2', {}, 'Pengingat'),
         h('p', {}, 'Buat pengingat sendiri, misalnya kirim botol ke mart atau belanja kelapa, lengkap dengan jam dan pengulangan.'),
         h('a', { class: 'btn', href: '#/reminders' }, 'Kelola pengingat')),

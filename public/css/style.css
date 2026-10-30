@@ -336,3 +336,21 @@ details.more[open] > summary { margin-bottom: 4px; }
 
 .ledger a { color: #9fe3d8; text-decoration: underline; text-underline-offset: 2px; }
 .ledger a:hover { color: #fff; }
+
+/* ===== Halaman masuk dan kolom sandi ===== */
+.login-page { min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px calc(24px + env(safe-area-inset-bottom)); background: var(--bg); color: var(--ink); font-family: var(--font); }
+.login-card { width: min(400px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 28px 24px 26px; box-shadow: 0 10px 40px rgba(10, 30, 26, .08); text-align: center; }
+.login-logo { display: block; margin: 0 auto 8px; border-radius: 22px; }
+.login-card h1 { font-size: 1.5rem; }
+.login-sub { color: var(--ink-soft); margin: 4px 0 18px; }
+.login-card form { text-align: left; display: grid; gap: 14px; }
+.pw-box { position: relative; }
+.pw-box input { padding-right: 52px; min-height: 48px; font-size: 16px; }
+.pw-eye { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--ink-soft); cursor: pointer; }
+.pw-eye:hover { color: var(--ink); background: rgba(0, 0, 0, .05); }
+.remember { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; cursor: pointer; }
+.login-hint { color: var(--ink-soft); font-size: .85rem; margin: -8px 0 0 28px; }
+.login-submit { width: 100%; justify-content: center; min-height: 48px; font-size: 1rem; }
+.nav-logout { margin-top: 14px; padding: 12px 12px; border: 0; border-top: 1px solid rgba(255, 255, 255, .14); border-radius: 0; background: transparent; color: #c5d8d2; font: inherit; text-align: left; cursor: pointer; }
+.nav-logout:hover { color: #fff; }
+@media (max-width: 900px) { .nav-logout { padding: 12px 14px; } }

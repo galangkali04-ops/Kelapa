@@ -38,6 +38,21 @@ Data lama tidak hilang. Koleksi `expenses` dan kategori pengeluaran dibuat otoma
 Logo ada di `public/icons/` (`icon-180.png` untuk iPhone/iPad, `icon-192.png` dan `icon-512.png` untuk Android, `favicon-32.png` untuk tab browser). Nama di bawah ikon diatur di `public/manifest.webmanifest` (`short_name`, sekarang "DEWA"). Untuk mengganti logo, timpa file-file itu dengan gambar persegi berukuran persis sama.
 Ikon hanya dibaca saat aplikasi ditambahkan ke Layar Utama. Kalau sebelumnya sudah ditambahkan dengan ikon lama, hapus dulu ikonnya lalu tambahkan lagi.
 
+## Sandi dan keamanan
+
+Seluruh aplikasi dan datanya dikunci dengan sandi.
+
+- **Pertama kali dibuka**, aplikasi meminta Anda **membuat sandi** (minimal 6 karakter). Buka alamat aplikasi segera setelah `npm start`, sebelum alamatnya dibagikan ke orang lain, supaya Andalah yang membuat sandinya.
+- **Masuk**: ketik sandi. Tombol **mata** di ujung kolom menampilkan atau menyembunyikan sandi.
+- **Ingat saya 30 hari**: kalau dicentang, perangkat itu tidak perlu memasukkan sandi lagi selama 30 hari (tetap berlaku walau server dinyalakan ulang). Kalau tidak dicentang, Anda keluar sendiri saat browser ditutup (paling lama 12 jam). Jangan dicentang di perangkat milik orang lain.
+- **Keluar**: tombol **Keluar** di bagian bawah menu, atau di Pengaturan > Keamanan.
+- **Ganti sandi**: Pengaturan > Keamanan > Ganti sandi. Setelah diganti, perangkat lain harus masuk lagi.
+- **Salah sandi 5 kali** berturut-turut: akses dari perangkat itu dikunci 5 menit.
+- **Lupa sandi**: hentikan server, hapus file `data/auth.json` dan `data/sessions.json`, jalankan lagi, lalu buat sandi baru. Data usaha tidak terhapus.
+
+Sandi disimpan dalam bentuk hash (scrypt) di `data/auth.json`, terpisah dari data usaha. Jadi tidak ikut tersimpan di file backup, tidak terhapus saat reset data, dan tidak terbawa saat pulihkan data. Cookie masuk bersifat HttpOnly dan SameSite=Lax. Kalau aplikasi dibuka lewat https, cookie otomatis diberi tanda Secure. Sebaiknya pakai https kalau diakses dari internet, karena sandi dikirim saat masuk.
+Alternatif: jalankan dengan `APP_PASSWORD=sandirahasia npm start`. Sandi itu yang dipakai dan tidak bisa diganti dari aplikasi.
+
 ## Mulai dari awal (reset data)
 
 Buka **Pengaturan**, scroll ke **Mulai dari awal**. Ada dua pilihan:
@@ -137,6 +152,6 @@ Menu baru: tambah di `server/schema.js`, `server/db.js` (COLLECTIONS dan default
 | Variabel | Fungsi |
 |---|---|
 | `PORT` | Ganti port (default 3000) |
-| `APP_PASSWORD` | Kunci aplikasi dengan password (username default `owner`) |
+| `APP_PASSWORD` | Tetapkan sandi lewat server (tidak ada nama pengguna, hanya sandi). Kosongkan untuk membuat sandi di aplikasi |
 | `APP_TZ` | Zona waktu server (default `Asia/Makassar`) |
 | `DATA_FILE` | Lokasi file database |
