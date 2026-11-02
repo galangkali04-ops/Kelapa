@@ -1,11 +1,14 @@
 // Produksi per batch: input bahan & biaya, hitung total modal dan HPP per botol.
-import { h, rp, int, fmtDate, today, daysBetween, dataTable, pageHeader, formShell, formDialog, buildFields, confirmBox, openDialog, closeDialog, toast, setChildren } from '../ui.js';
+import { h, rp, int, fmtDate, today, daysBetween, dayGroups, dataTable, pageHeader, formShell, formDialog, buildFields, confirmBox, openDialog, closeDialog, toast, setChildren } from '../ui.js';
 import { api } from '../api.js';
 
 const COST_SUGGESTIONS = ['Tenaga kerja', 'Gas / listrik', 'Ongkos kirim', 'Es batu', 'Dus / kemasan', 'Sewa tempat'];
 
 // Kelapa yang dipakai di satu batch (bahan yang namanya mengandung "kelapa") dan hasil botolnya.
 const coconutsUsed = (b) => (b.items || []).filter((i) => /kelapa/i.test(i.name)).reduce((s, i) => s + (Number(i.qty) || 0), 0);
+const openDays = new Set(); // tanggal yang sedang terbuka. Awalnya tertutup semua; tanggal yang baru disimpan otomatis terbuka
+const cleanPrefix = (p) => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+const prefixOf = (b) => cleanPrefix(b.prefix) || cleanPrefix(String(b.code || '').split('-')[0]);
 const fmt2 = (n) => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
 
 function expiryCell(b) {
@@ -17,16 +20,15 @@ function expiryCell(b) {
 }
 
 export function renderBatches(root, page, ctx) {
+  // Di dalam satu tanggal: kode batch bisa diklik untuk rincian bahan dan biaya.
   const columns = [
-    { key: 'code', label: 'Kode batch' },
-    { key: 'date', label: 'Produksi', type: 'date' },
-    { key: 'expiryDate', label: 'Expired', render: expiryCell },
+    { key: 'code', label: 'Kode batch', render: (b) => h('button', { class: 'row-link', type: 'button', title: 'Lihat rincian batch', onclick: () => showDetail(b) }, b.code) },
     { key: 'goodBottles', label: 'Botol jadi', type: 'int' },
     { key: 'totalCost', label: 'Total modal', type: 'rp' },
     { key: 'hpp', label: 'HPP per botol', type: 'rp' },
-    { key: 'yield', label: 'Botol / kelapa', render: (b) => { const k = coconutsUsed(b); return k > 0 ? fmt2(b.goodBottles / k) : '—'; } },
     { key: 'stockWarehouse', label: 'Stok gudang', type: 'int' },
     { key: 'remainingAtPartners', label: 'Di mart', type: 'int' },
+    { key: 'expiryDate', label: 'Expired', render: expiryCell },
   ];
 
   // Botol di gudang yang sudah lewat expired (botol di mart dicatat lewat halaman Mart).
@@ -62,19 +64,27 @@ export function renderBatches(root, page, ctx) {
     : null;
 
   setChildren(root, 
-    pageHeader('Produksi', 'Isi botol jadi dan kelapa yang dipakai. Botol, tutup, dan label terisi otomatis, HPP per botol dihitung sendiri.',
+    pageHeader('Produksi', 'Produksi dikelompokkan per tanggal: klik tanggal untuk melihat batch-nya, lalu klik kode batch untuk rincian bahan dan biaya.',
       h('button', { class: 'btn primary', onclick: () => openBatchForm(null, ctx) }, 'Tambah batch')),
     ...(yieldInfo ? [yieldInfo] : []),
-    h('div', { class: 'panel flush' }, dataTable(columns, ctx.data.batches, {
-      stack: true,
+    dayGroups(ctx.data.batches, {
+      keep: openDays,
       emptyText: 'Belum ada batch. Klik "Tambah batch" untuk mencatat produksi pertama.',
-      actions: (b) => [
-        h('button', { class: 'btn small', onclick: () => showDetail(b) }, 'Rincian'),
-        b.stockWarehouse > 0 ? h('button', { class: 'btn small', onclick: () => expireWarehouse(b) }, 'Expired') : null,
-        h('button', { class: 'btn small', onclick: () => openBatchForm(b, ctx) }, 'Ubah'),
-        h('button', { class: 'btn small danger', onclick: () => remove(b) }, 'Hapus'),
-      ].filter(Boolean),
-    })));
+      meta: (date, list) => [
+        `${int(list.length)} batch`,
+        h('b', {}, `${int(list.reduce((n, b) => n + (Number(b.goodBottles) || 0), 0))} botol jadi`),
+        `Modal ${rp(list.reduce((n, b) => n + (Number(b.totalCost) || 0), 0))}`,
+        list.some((b) => b.stockTotal > 0 && daysBetween(b.expiryDate, today()) < 0) ? h('span', { class: 'badge bad' }, 'Ada yang lewat expired') : null,
+      ],
+      body: (list) => dataTable(columns, list, {
+        stack: true,
+        actions: (b) => [
+          b.stockWarehouse > 0 ? h('button', { class: 'btn small', onclick: () => expireWarehouse(b) }, 'Expired') : null,
+          h('button', { class: 'btn small', onclick: () => openBatchForm(b, ctx) }, 'Ubah'),
+          h('button', { class: 'btn small danger', onclick: () => remove(b) }, 'Hapus'),
+        ].filter(Boolean),
+      }),
+    }));
 
   if (ctx.params && ctx.params.has('add')) { history.replaceState(null, '', `#/${page.id}`); openBatchForm(null, ctx); }
 }
@@ -91,7 +101,10 @@ function showDetail(b) {
       h('div', {}, h('b', {}, rp(b.hpp)), h('span', {}, 'HPP per botol')),
       h('div', {}, h('b', {}, int(b.rejectBottles)), h('span', {}, 'Botol gagal produksi')),
       h('div', {}, h('b', {}, int(b.sold)), h('span', {}, 'Terjual')),
-      h('div', {}, h('b', {}, rp(b.grossProfit)), h('span', {}, 'Gross profit batch ini'))),
+      h('div', {}, h('b', {}, rp(b.grossProfit)), h('span', {}, 'Gross profit batch ini')),
+      h('div', {}, h('b', {}, fmtDate(b.date)), h('span', {}, 'Tanggal produksi')),
+      h('div', {}, h('b', {}, fmtDate(b.expiryDate)), h('span', {}, 'Expired')),
+      h('div', {}, h('b', {}, coconutsUsed(b) > 0 ? fmt2(b.goodBottles / coconutsUsed(b)) : '—'), h('span', {}, 'Botol per kelapa'))),
     dataTable(cols, [...rowsItems, ...rowsCosts], { emptyText: 'Belum ada rincian bahan.' }),
     h('p', { class: 'muted', style: 'margin-top:12px' }, `HPP = total modal ${rp(b.totalCost)} dibagi ${int(b.goodBottles)} botol jadi. Botol gagal tidak ikut dibagi, jadi biayanya tertanggung di HPP.`),
     h('div', { class: 'form-actions' }, h('button', { class: 'btn', onclick: closeDialog }, 'Tutup'))));
@@ -99,21 +112,42 @@ function showDetail(b) {
 
 function openBatchForm(batch, ctx) {
   const isEdit = !!batch;
+  const defaultPrefix = cleanPrefix(ctx.settings.codePrefix) || 'KLP';
+  const prefixes = [...new Set([defaultPrefix, ...ctx.data.batches.map(prefixOf)].filter(Boolean))];
   const mainFields = [
     { key: 'date', label: 'Tanggal produksi', type: 'date', required: true, default: 'today' },
+    { key: 'prefix', label: 'Awalan kode batch', type: 'text', required: true, default: () => ctx.settings.codePrefix || 'KLP', suggest: () => prefixes,
+      help: 'Bawaan KLP. Boleh diganti per produksi, mis. SRS.' },
     { key: 'goodBottles', label: 'Botol jadi (layak jual)', type: 'int', required: true },
     { key: 'rejectBottles', label: 'Botol gagal produksi', type: 'int', default: 0 },
   ];
   const moreFields = [
-    { key: 'code', label: 'Kode batch', type: 'text', help: 'Kosongkan untuk dibuat otomatis.' },
+    { key: 'code', label: 'Kode batch (opsional)', type: 'text', help: 'Kosongkan supaya dibuat otomatis dari awalan, tanggal, dan nomor urut.' },
     { key: 'shelfLifeDays', label: 'Masa simpan (hari)', type: 'int', required: true, default: () => ctx.settings.shelfLifeDays },
     { key: 'note', label: 'Catatan', type: 'text', full: true },
   ];
-  const A = buildFields(mainFields, batch || {}, ctx);
+  const A = buildFields(mainFields, batch ? { ...batch, prefix: prefixOf(batch) } : {}, ctx);
   const B = buildFields(moreFields, batch || {}, ctx);
   const inputs = { ...A.inputs, ...B.inputs };
   const getValues = () => ({ ...A.getValues(), ...B.getValues() });
-  const top = h('div', {}, A.node, h('details', { class: 'more' }, h('summary', {}, 'Kode batch, masa simpan, catatan'), B.node));
+  // Kode batch yang akan dipakai, dihitung dengan aturan yang sama seperti di server.
+  const codeEl = h('strong');
+  const wasAuto = isEdit && new RegExp(`^${prefixOf(batch)}-${String(batch.date).replace(/-/g, '')}-\\d+$`).test(batch.code || '');
+  const showCode = () => {
+    const pre = cleanPrefix(inputs.prefix.value) || defaultPrefix;
+    const date = inputs.date.value || today();
+    const typed = inputs.code.value.trim();
+    let code = typed;
+    if (!typed || (isEdit && typed === batch.code && wasAuto && (prefixOf(batch) !== pre || batch.date !== date))) {
+      const head = `${pre}-${date.replace(/-/g, '')}-`;
+      const used = ctx.data.batches.filter((x) => !(isEdit && x.id === batch.id) && String(x.code).startsWith(head)).map((x) => Number(String(x.code).slice(head.length)) || 0);
+      code = head + String(Math.max(0, ...used) + 1).padStart(2, '0');
+    }
+    codeEl.textContent = code;
+  };
+  for (const el of [inputs.prefix, inputs.date, inputs.code]) el.addEventListener('input', showCode);
+  showCode();
+  const top = h('div', {}, A.node, h('p', { class: 'code-preview' }, 'Kode batch: ', codeEl), h('details', { class: 'more' }, h('summary', {}, 'Kode manual, masa simpan, catatan'), B.node));
 
   // Batch baru: semua bahan langsung muncul sebagai baris, tinggal isi jumlah.
   const items = isEdit
@@ -208,6 +242,7 @@ function openBatchForm(batch, ctx) {
         costs: costs.filter((c) => c.name && Number(c.amount) > 0).map((c) => ({ name: c.name, amount: Number(c.amount) })),
       };
       await api(isEdit ? `/batches/${batch.id}` : '/batches', { method: isEdit ? 'PUT' : 'POST', body });
+      openDays.add(body.date);
       toast(isEdit ? 'Batch diperbarui' : 'Batch ditambahkan');
       await ctx.refresh();
     },

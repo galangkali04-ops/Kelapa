@@ -18,6 +18,7 @@ const schemas = {
     note: { t: 'str', label: 'Catatan' },
   },
   batches: {
+    prefix: { t: 'str', label: 'Awalan kode' },
     code: { t: 'str', label: 'Kode batch' },
     date: { t: 'date', label: 'Tanggal produksi' },
     shelfLifeDays: { t: 'int0', label: 'Masa simpan' },

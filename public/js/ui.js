@@ -27,6 +27,7 @@ export const fmtMonth = (m) => (m ? new Date(`${m}-01T00:00:00`).toLocaleDateStr
 export const pct = (n) => `${(Number(n) || 0).toFixed(1).replace('.', ',')}%`;
 export const today = () => new Date().toLocaleDateString('sv-SE');
 export const fmtDate = (s) => (s ? new Date(`${s}T00:00:00`).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+export const fmtDay = (s) => (s ? new Date(`${s}T00:00:00`).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Tanpa tanggal');
 export const daysBetween = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 86400000);
 
 /* ---------- Toast ---------- */
@@ -170,7 +171,7 @@ export function buildFields(fields, values, ctx) {
         id, name: f.key, required: !!f.required, placeholder: f.placeholder,
         type: numeric ? 'number' : f.type === 'date' ? 'date' : f.type === 'month' ? 'month' : f.type === 'time' ? 'time' : 'text',
         step: f.type === 'int' ? '1' : numeric ? 'any' : null,
-        min: numeric ? '0' : null, inputmode: numeric ? 'decimal' : null,
+        min: f.min === 'today' ? today() : numeric ? '0' : null, inputmode: numeric ? 'decimal' : null,
         list: f.suggest ? `dl_${f.key}` : null, autocomplete: 'off',
       });
       input.value = v;
@@ -262,6 +263,36 @@ export function dataTable(columns, rows, { actions, emptyText = 'Belum ada data.
     h('tbody', {}, rows.map((r) => h('tr', {},
       columns.map((c) => h('td', { class: cls(c), 'data-label': c.label }, cell(c, r))),
       actions ? h('td', { class: 'actions' }, h('div', { class: 'cell-actions' }, actions(r))) : null)))));
+}
+
+// Daftar dikelompokkan per tanggal. Tiap tanggal satu baris ringkas; klik untuk membuka isinya.
+// rows harus sudah terurut (tanggal terbaru dulu). `keep` = Set tanggal yang sedang terbuka (disimpan
+// di luar supaya tetap terbuka setelah halaman digambar ulang). meta(date, rows) = ringkasan di baris tanggal.
+export function dayGroups(rows, { keep, meta, body, limit = 31, emptyText = 'Belum ada data.' }) {
+  if (!rows.length) return h('p', { class: 'empty' }, emptyText);
+  const byDate = new Map();
+  for (const r of rows) {
+    const k = r.date || '';
+    if (!byDate.has(k)) byDate.set(k, []);
+    byDate.get(k).push(r);
+  }
+  const dates = [...byDate.keys()];
+  const wrap = h('div', { class: 'days' });
+  let shown = limit;
+  const draw = () => {
+    setChildren(wrap,
+      dates.slice(0, shown).map((date) => {
+        const list = byDate.get(date);
+        const d = h('details', { class: 'day', open: keep.has(date) },
+          h('summary', {}, h('span', { class: 'day-title' }, fmtDay(date)), h('span', { class: 'day-meta' }, [meta(date, list)].flat().filter(Boolean).map((m) => h('span', {}, m)))),
+          h('div', { class: 'day-body' }, body(list, date)));
+        d.addEventListener('toggle', () => { if (d.open) keep.add(date); else keep.delete(date); });
+        return d;
+      }),
+      dates.length > shown ? h('button', { class: 'btn', type: 'button', onclick: () => { shown += limit; draw(); } }, `Tampilkan tanggal sebelumnya (${dates.length - shown} lagi)`) : null);
+  };
+  draw();
+  return wrap;
 }
 
 // Ganti isi elemen. Nilai kosong (null/false) dibuang, karena replaceChildren akan menuliskannya sebagai teks "null".

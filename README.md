@@ -83,6 +83,21 @@ Halaman Produksi juga menampilkan kolom **Botol / kelapa** per batch dan rata-ra
 
 **Beranda** menampilkan angka hari ini: saldo kas, stok bahan (masuk dan keluar hari ini), botol jadi, botol keluar, dan botol yang masih di mart. **Laporan** menampilkan untung rugi per periode, tabel rincinya dilipat (klik judulnya untuk membuka).
 
+### Laporan per mart dan unduh PDF
+
+- Di **Laporan**, buka bagian **Per mart**, lalu klik nama mart. Halaman **Laporan mart** hanya menampilkan **batch dan transaksi milik mart itu** (pengiriman, penjualan, retur, expired), lengkap dengan ringkasan untung rugi dan sisa botol di mart tersebut. Tombol **Laporan** di kanan atas untuk kembali.
+- Tombol **Unduh PDF** ada di halaman **Laporan** (laporan keseluruhan: laba, ringkasan botol, per mart, per batch, pengeluaran per kategori, penjualan per hari) dan di halaman **Laporan mart** (laporan mart itu saja).
+- PDF mengikuti **periode yang sedang dipilih** di layar (hari ini, 7 hari, bulan ini, semua waktu, atau tanggal sendiri). Pilihan periode dibawa saat pindah antara Laporan dan Laporan mart.
+- PDF dibuat di server memakai `pdfkit`, jadi setelah memperbarui aplikasi jalankan `npm install` sekali lagi. Nama file otomatis, mis. `laporan-mart-sari-utama-2026-11-02.pdf`.
+- Di iPhone/iPad, PDF terbuka di penampil; pakai tombol bagikan untuk menyimpannya ke Files atau mengirimnya lewat WhatsApp.
+
+### Beranda, Pengeluaran, dan Produksi per tanggal
+
+- **Beranda** hanya menampilkan tiga hal: tanggal hari ini, **sisa saldo kas**, dan **botol keluar hari ini**. Klik kartu botol keluar untuk melihat daftar mart yang dikirimi hari ini (jumlah botol per mart dan dari batch mana), bukan hanya total.
+- **Pengeluaran** dikelompokkan per tanggal. Tiap tanggal satu baris berisi jumlah catatan dan **total hari itu**; klik tanggalnya untuk melihat daftar pengeluarannya. Pengeluaran **hari ini** masih bisa ditambah, diubah, dan dihapus. Begitu tanggalnya lewat, tanggal itu **terkunci** (ditandai "Terkunci") dan tidak bisa diubah, dihapus, atau ditambah lagi. Pengunciannya dijaga juga oleh server, jadi tidak bisa ditembus lewat cara lain. Kalau ada pengeluaran yang baru dibayar sekarang, catat sebagai pengeluaran hari ini.
+- **Produksi** dikelompokkan per tanggal: klik tanggal untuk melihat batch-nya (jumlah batch, botol jadi, dan modal tampil di baris tanggal), lalu klik **kode batch** untuk rincian bahan dan biaya.
+- **Awalan kode batch** bisa diubah di setiap produksi. Bawaannya KLP; ganti jadi SRS atau lainnya di isian "Awalan kode batch". Kode dibuat otomatis: `AWALAN-TANGGAL-NOMOR`, mis. `SRS-20261102-01`. Nomor dihitung per awalan dan per tanggal. Kalau awalan atau tanggal batch diubah, kodenya ikut berganti otomatis (kode yang diketik manual tidak diubah). Awalan bawaan: `codePrefix` di `server/db.js`.
+
 ### Bahan dan harga per pcs
 Di menu **Bahan** ada tabel bahan dan harganya. Kolom **Harga per pcs** bisa diisi langsung (mis. kelapa 7000, botol 1500), tersimpan otomatis saat selesai mengetik. Bahan lain (plastik segel, kardus, dan lain-lain) ditambah lewat tombol **Bahan baru**.
 Harga manual dipakai selama belanja bahan itu belum dicatat. Begitu belanja mulai dicatat (**Belanja bahan**), harga rata-rata dari belanja otomatis menggantikannya.
@@ -145,7 +160,7 @@ Belanja bahan tidak langsung mengurangi profit. Ia menjadi stok, lalu masuk ke p
 
 Halaman daftar dibuat otomatis dari `public/js/config.js` (kolom dan isian form). Rumus ada di `server/calc.js`,
 aturan validasi di `server/schema.js`. Tambah kolom atau isian cukup satu baris di `config.js`.
-Menu baru: tambah di `server/schema.js`, `server/db.js` (COLLECTIONS dan defaults), `server/calc.js` (fungsi list), `public/js/api.js`, dan blok baru di `public/js/config.js` (dan daftarkan di `ORDER` di akhir file itu).
+Isi PDF diatur di `server/pdf.js` (kolom tabel dan urutan bagian). Menu baru: tambah di `server/schema.js`, `server/db.js` (COLLECTIONS dan defaults), `server/calc.js` (fungsi list), `public/js/api.js`, dan blok baru di `public/js/config.js` (dan daftarkan di `ORDER` di akhir file itu).
 
 ## Opsi
 

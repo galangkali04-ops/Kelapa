@@ -223,7 +223,7 @@ function list(db, col) {
     case 'sales': return c.salesView.sort(byDateDesc);
     case 'returns': return c.returnsView.sort(byDateDesc);
     case 'expirations': return c.expirationsView.sort(byDateDesc);
-    case 'expenses': return (db.expenses || []).slice().sort(byDateDesc);
+    case 'expenses': return (db.expenses || []).map((x) => ({ ...x, locked: (x.date || '') < today() })).sort(byDateDesc);
     case 'purchases': return (db.purchases || []).map((p) => {
       const m = c.inv.mats.get(p.materialId); const v = c.inv.purchaseView.get(p.id) || {};
       return { ...p, materialName: m ? m.name : '?', unit: m ? m.unit : '', usable: v.usable, unitCost: v.unitCost };
@@ -339,11 +339,24 @@ function home(db) {
     };
   }).sort((a, b) => a.since.localeCompare(b.since));
 
+  // Botol yang keluar hari ini, dikelompokkan per mart (bukan total keseluruhan).
+  const sentMap = new Map();
+  for (const d of c.deliveries.values()) {
+    if (d.date !== t) continue;
+    const row = sentMap.get(d.partnerId) || { id: d.partnerId, name: d.partnerName, qty: 0, batches: new Map() };
+    row.qty += num(d.qty);
+    row.batches.set(d.batchCode, (row.batches.get(d.batchCode) || 0) + num(d.qty));
+    sentMap.set(d.partnerId, row);
+  }
+  const deliveriesToday = [...sentMap.values()]
+    .map((r) => ({ id: r.id, name: r.name, qty: r.qty, batches: [...r.batches].map(([code, qty]) => ({ code, qty })) }))
+    .sort((a, b) => b.qty - a.qty || a.name.localeCompare(b.name));
+
   const spentBuy = sum(buyToday, (p) => num(p.total));
   const spentExp = sum((db.expenses || []).filter((x) => x.date === t), (x) => num(x.amount));
   const spentProd = sum(batchToday, (b) => b.extraCost + b.untrackedCost);
   return {
-    today: t, materials, hasTracked: materials.length > 0, partners,
+    today: t, materials, hasTracked: materials.length > 0, partners, deliveriesToday,
     bottles: {
       madeToday: sum(batchToday, (b) => num(b.goodBottles)),
       deliveredToday: sum([...c.deliveries.values()].filter((d) => d.date === t), (d) => num(d.qty)),
@@ -457,4 +470,76 @@ function report(db, from, to) {
   return { range: { from: from || '', to: to || '' }, today: t, totals, stock, perPartner, perBatch, perCategory, trend, alerts };
 }
 
-module.exports = { compute, check, usage, list, report, notifications, home, today };
+// Laporan satu mart: hanya pengiriman, penjualan, retur, expired, dan batch milik mart itu.
+function martReport(db, partnerId, from, to) {
+  const c = compute(db);
+  const partner = c.partners.get(partnerId);
+  if (!partner) return null;
+  const inR = (d) => (!from || d >= from) && (!to || d <= to);
+  const mine = (x) => x.partnerId === partnerId;
+
+  const deliveries = [...c.deliveries.values()].filter((d) => mine(d) && inR(d.date));
+  const sales = c.salesView.filter((s) => mine(s) && inR(s.date));
+  const returns = c.returnsView.filter((r) => mine(r) && inR(r.date));
+  const expirations = c.expirationsView.filter((e) => mine(e) && inR(e.date));
+
+  const revenue = sum(sales, (s) => s.total);
+  const cogs = sum(sales, (s) => s.cogs);
+  const expiredLoss = sum(expirations, (e) => e.loss);
+  const returnLoss = sum(returns, (r) => r.loss);
+  const totals = {
+    delivered: sum(deliveries, (d) => num(d.qty)),
+    sold: sum(sales, (s) => num(s.qty)),
+    returned: sum(returns, (r) => num(r.qty)),
+    returnedBad: sum(returns.filter((r) => r.condition === 'rusak'), (r) => num(r.qty)),
+    expired: sum(expirations, (e) => num(e.qty)),
+    revenue, cogs, grossProfit: revenue - cogs, expiredLoss, returnLoss,
+    netProfit: revenue - cogs - expiredLoss - returnLoss,
+    unpaid: sum(sales.filter((s) => !s.paid), (s) => s.total),
+    remaining: partner.remaining, // sisa saat ini, tidak tergantung periode
+  };
+
+  // Transaksi digabung jadi satu daftar, terbaru di atas.
+  const tx = [
+    ...deliveries.map((d) => ({
+      id: d.id, date: d.date, createdAt: d.createdAt, kind: 'kirim', batchCode: d.batchCode, qty: num(d.qty),
+      amount: num(d.qty) * num(d.price), paid: null, note: d.note || '',
+    })),
+    ...sales.map((s) => ({
+      id: s.id, date: s.date, createdAt: s.createdAt, kind: 'jual', batchCode: s.batchCode, qty: num(s.qty),
+      amount: s.total, paid: !!s.paid, note: s.note || '',
+    })),
+    ...returns.map((r) => ({
+      id: r.id, date: r.date, createdAt: r.createdAt, kind: r.condition === 'rusak' ? 'retur-rusak' : 'retur', batchCode: r.batchCode,
+      qty: num(r.qty), amount: r.loss, paid: null, note: [r.reason, r.note].filter(Boolean).join(' · '),
+    })),
+    ...expirations.map((e) => ({
+      id: e.id, date: e.date, createdAt: e.createdAt, kind: 'expired', batchCode: e.batchCode, qty: num(e.qty),
+      amount: e.loss, paid: null, note: e.note || '',
+    })),
+  ].sort(byDateDesc);
+
+  // Batch yang pernah masuk ke mart ini (angka hanya milik mart ini).
+  const touched = new Set([...deliveries, ...sales, ...returns, ...expirations].map((x) => x.batchId));
+  const perBatch = [...c.batches.values()].filter((b) => touched.has(b.id)).map((b) => {
+    const ds = deliveries.filter((d) => d.batchId === b.id);
+    const ss = sales.filter((s) => s.batchId === b.id);
+    return {
+      id: b.id, code: b.code, date: b.date, expiryDate: b.expiryDate, hpp: b.hpp,
+      delivered: sum(ds, (d) => num(d.qty)),
+      sold: sum(ss, (s) => num(s.qty)),
+      returned: sum(returns.filter((r) => r.batchId === b.id), (r) => num(r.qty)),
+      expired: sum(expirations.filter((e) => e.batchId === b.id), (e) => num(e.qty)),
+      remaining: sum([...c.deliveries.values()].filter((d) => mine(d) && d.batchId === b.id), (d) => d.remaining),
+      revenue: sum(ss, (s) => s.total), grossProfit: sum(ss, (s) => s.profit),
+    };
+  }).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  return {
+    range: { from: from || '', to: to || '' }, today: today(),
+    partner: { id: partner.id, name: partner.name, type: partner.type || '', scheme: partner.scheme || '', contact: partner.contact || '', address: partner.address || '' },
+    totals, perBatch, transactions: tx,
+  };
+}
+
+module.exports = { compute, check, usage, list, report, martReport, notifications, home, today };

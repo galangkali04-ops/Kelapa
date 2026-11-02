@@ -9,11 +9,13 @@ import { renderSettings } from './pages/settings.js';
 import { renderHome } from './pages/home.js';
 import { renderStock } from './pages/stock.js';
 import { renderVisit } from './pages/visit.js';
+import { renderExpenses } from './pages/expenses.js';
+import { renderMartReport } from './pages/martreport.js';
 import { startNotifications } from './notify.js';
 import { initMenu } from './menu.js';
 
 // Tambahkan jenis halaman baru di sini jika membuat modul sendiri.
-const renderers = { stock: renderStock, home: renderHome, visit: renderVisit, dashboard: renderDashboard, batches: renderBatches, crud: renderCrud, settings: renderSettings };
+const renderers = { stock: renderStock, home: renderHome, visit: renderVisit, martreport: renderMartReport, expenses: renderExpenses, dashboard: renderDashboard, batches: renderBatches, crud: renderCrud, settings: renderSettings };
 
 const view = document.getElementById('view');
 const nav = document.getElementById('nav');

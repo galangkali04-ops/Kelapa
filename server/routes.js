@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const store = require('./db');
 const calc = require('./calc');
 const visit = require('./visit');
+const pdf = require('./pdf');
 const { schemas, sanitize, isSimple, validators } = require('./schema');
 
 const api = express.Router();
@@ -19,14 +20,27 @@ function mutate(res, fn) {
   return res.json(result.value);
 }
 
-// Isi otomatis sebelum disimpan (kode batch, batch dari pengiriman, dst).
-function prepare(col, db, item) {
+// Awalan kode batch: huruf/angka saja, huruf besar, maksimal 8 karakter (mis. KLP, SRS).
+const cleanPrefix = (p) => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+const prefixOf = (b) => cleanPrefix(b.prefix) || cleanPrefix(String(b.code || '').split('-')[0]);
+
+// Kode otomatis: AWALAN-TANGGAL-NOMOR. Nomor = nomor terbesar yang sudah dipakai awalan dan tanggal itu + 1,
+// jadi tetap unik walau ada batch yang dihapus.
+function nextCode(db, prefix, date, skipId) {
+  const head = `${prefix}-${date.replace(/-/g, '')}-`;
+  const used = db.batches.filter((b) => b.id !== skipId && String(b.code || '').startsWith(head)).map((b) => Number(String(b.code).slice(head.length)) || 0);
+  return head + String(Math.max(0, ...used) + 1).padStart(2, '0');
+}
+
+// Isi otomatis sebelum disimpan (kode batch, batch dari pengiriman, dst). `old` = data sebelum diubah (kalau ubah).
+function prepare(col, db, item, old) {
   if (col === 'batches') {
     if (!item.shelfLifeDays) item.shelfLifeDays = Number(db.settings.shelfLifeDays) || 3;
-    if (!item.code) {
-      const n = db.batches.filter((b) => b.date === item.date && b.id !== item.id).length + 1;
-      item.code = `${db.settings.codePrefix || 'KLP'}-${item.date.replace(/-/g, '')}-${String(n).padStart(2, '0')}`;
-    }
+    item.prefix = cleanPrefix(item.prefix) || cleanPrefix(db.settings.codePrefix) || 'KLP';
+    // Kode lama yang dibuat otomatis ikut berganti kalau awalan atau tanggalnya diubah. Kode yang diketik sendiri dibiarkan.
+    const wasAuto = old && new RegExp(`^${prefixOf(old)}-${String(old.date).replace(/-/g, '')}-\\d+$`).test(old.code || '');
+    const moved = old && (prefixOf(old) !== item.prefix || old.date !== item.date);
+    if (!item.code || (old && item.code === old.code && wasAuto && moved)) item.code = nextCode(db, item.prefix, item.date, item.id);
   }
   if (col === 'reminders' && item.repeat !== 'once') item.date = '';
   if (col === 'expirations' && item.deliveryId) {
@@ -34,6 +48,10 @@ function prepare(col, db, item) {
     if (d) item.batchId = d.batchId;
   }
 }
+
+// Pengeluaran yang tanggalnya sudah lewat terkunci: tidak bisa ditambah, diubah, atau dihapus.
+const LOCK_MSG = 'Pengeluaran tanggal yang sudah lewat terkunci dan tidak bisa diubah lagi. Catat sebagai pengeluaran hari ini kalau memang baru dibayar sekarang.';
+const PAST_MSG = 'Pengeluaran hanya bisa dicatat untuk hari ini atau tanggal berikutnya. Tanggal yang sudah lewat terkunci.';
 
 api.get('/settings', (req, res) => res.json(store.get().settings));
 
@@ -64,9 +82,39 @@ api.get('/home', (req, res) => res.json(calc.home(store.get())));
 // Order mart: hasil nota sebelumnya + order baru dalam satu simpan.
 api.post('/visits', (req, res) => mutate(res, (db) => visit.applyVisit(db, req.body || {})));
 
+const okDate = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : '');
+
 api.get('/report', (req, res) => {
-  const ok = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(v || '') ? v : '');
-  res.json(calc.report(store.get(), ok(req.query.from), ok(req.query.to)));
+  res.json(calc.report(store.get(), okDate(req.query.from), okDate(req.query.to)));
+});
+
+// Laporan satu mart: hanya transaksi dan batch milik mart itu.
+api.get('/report/mart/:id', (req, res) => {
+  const rep = calc.martReport(store.get(), req.params.id, okDate(req.query.from), okDate(req.query.to));
+  if (!rep) return res.status(404).json({ error: 'Mart tidak ditemukan.' });
+  return res.json(rep);
+});
+
+// Kirim PDF ke browser sebagai unduhan.
+function sendPdf(res, doc, filename) {
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Cache-Control', 'no-store');
+  doc.pipe(res);
+  doc.end();
+}
+
+api.get('/report/pdf', (req, res) => {
+  const db = store.get();
+  const rep = calc.report(db, okDate(req.query.from), okDate(req.query.to));
+  sendPdf(res, pdf.overallReport(rep, db.settings.businessName || 'Air Kelapa'), `laporan-${pdf.slug(db.settings.businessName)}-${calc.today()}.pdf`);
+});
+
+api.get('/report/mart/:id/pdf', (req, res) => {
+  const db = store.get();
+  const rep = calc.martReport(db, req.params.id, okDate(req.query.from), okDate(req.query.to));
+  if (!rep) return res.status(404).json({ error: 'Mart tidak ditemukan.' });
+  return sendPdf(res, pdf.martReport(rep, db.settings.businessName || 'Air Kelapa'), `laporan-${pdf.slug(rep.partner.name)}-${calc.today()}.pdf`);
 });
 
 api.get('/backup', (req, res) => {
@@ -117,6 +165,7 @@ api.post('/:col', (req, res) => {
   if (error) return res.status(400).json({ error });
   const invalid = validators[col] && validators[col](value);
   if (invalid) return res.status(400).json({ error: invalid });
+  if (col === 'expenses' && value.date < calc.today()) return res.status(400).json({ error: PAST_MSG });
   return mutate(res, (db) => {
     const item = { id: crypto.randomUUID(), ...value, createdAt: new Date().toISOString() };
     prepare(col, db, item);
@@ -135,8 +184,12 @@ api.put('/:col/:id', (req, res) => {
   return mutate(res, (db) => {
     const idx = db[col].findIndex((x) => x.id === id);
     if (idx < 0) return { error: 'Data tidak ditemukan.', status: 404 };
+    if (col === 'expenses') {
+      if (db.expenses[idx].date < calc.today()) return { error: LOCK_MSG, status: 403 };
+      if (value.date < calc.today()) return { error: PAST_MSG, status: 400 };
+    }
     const item = { id, ...value, createdAt: db[col][idx].createdAt, updatedAt: new Date().toISOString() };
-    prepare(col, db, item);
+    prepare(col, db, item, db[col][idx]);
     db[col][idx] = item;
     return { value: item };
   });
@@ -148,6 +201,7 @@ api.delete('/:col/:id', (req, res) => {
   return mutate(res, (db) => {
     const idx = db[col].findIndex((x) => x.id === id);
     if (idx < 0) return { error: 'Data tidak ditemukan.', status: 404 };
+    if (col === 'expenses' && db.expenses[idx].date < calc.today()) return { error: LOCK_MSG, status: 403 };
     const used = calc.usage(db, col, id);
     if (used) return { error: used, status: 409 };
     db[col].splice(idx, 1);

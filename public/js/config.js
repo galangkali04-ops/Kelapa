@@ -21,6 +21,7 @@ const ALL = [
   { id: 'home', label: 'Beranda', type: 'home' },
   { id: 'visit', label: 'Mart', type: 'visit' },
   { id: 'dashboard', label: 'Laporan', type: 'dashboard' },
+  { id: 'mart-report', label: 'Laporan mart', type: 'martreport' },
   { id: 'batches', label: 'Produksi', type: 'batches' },
 
   {
@@ -91,9 +92,9 @@ const ALL = [
   },
 
   {
-    id: 'expenses', label: 'Pengeluaran', type: 'crud', collection: 'expenses', singular: 'pengeluaran',
+    id: 'expenses', label: 'Pengeluaran', type: 'expenses', collection: 'expenses', singular: 'pengeluaran',
     links: [{ label: 'Modal & tarik uang', href: '#/capital' }],
-    intro: 'Catat semua uang keluar di luar modal batch: sampah, gaji, beli botol kaca, listrik, bensin, sampai pengeluaran tak terduga. Total pengeluaran dikurangkan dari profit di Ringkasan. Bahan yang sudah dimasukkan di batch produksi jangan dicatat lagi di sini supaya tidak terhitung dua kali.',
+    intro: 'Pengeluaran dikelompokkan per tanggal: klik tanggal untuk melihat daftarnya. Hanya pengeluaran hari ini yang bisa diubah, tanggal yang sudah lewat terkunci. Catat semua uang keluar di luar modal batch: sampah, gaji, beli botol kaca, listrik, bensin, sampai pengeluaran tak terduga. Total pengeluaran dikurangkan dari profit di Ringkasan. Bahan yang sudah dimasukkan di batch produksi jangan dicatat lagi di sini supaya tidak terhitung dua kali.',
     columns: [
       { key: 'date', label: 'Tanggal', type: 'date' },
       { key: 'category', label: 'Kategori' },
@@ -102,7 +103,7 @@ const ALL = [
       { key: 'note', label: 'Catatan' },
     ],
     fields: [
-      { key: 'date', label: 'Tanggal', type: 'date', required: true, default: 'today' },
+      { key: 'date', label: 'Tanggal', type: 'date', required: true, default: 'today', min: 'today', help: 'Tidak bisa tanggal yang sudah lewat.' },
       { key: 'category', label: 'Kategori', type: 'text', required: true, placeholder: 'Pilih atau ketik sendiri', suggest: (d, s) => csv(s.expenseCategories),
         help: 'Daftar kategori bisa diubah di menu Pengaturan.' },
       { key: 'description', label: 'Keterangan', type: 'text', full: true, placeholder: 'Mis. beli 50 botol kaca' },
@@ -294,6 +295,7 @@ export const DEF = Object.fromEntries(ALL.map((p) => [p.id, p]));
 // Menu hanya 7: urutannya mengikuti kerja harian. Halaman tersembunyi dibuka lewat tombol di halaman induknya.
 const ROUTES = [
   ['home'], ['purchases'], ['batches'], ['visit'], ['expenses'], ['dashboard'], ['settings'],
+  ['mart-report', { hidden: true, nav: 'dashboard' }],
   ['capital', { hidden: true, nav: 'expenses' }],
   ['reminders', { hidden: true, nav: 'settings' }],
 ];

@@ -354,3 +354,42 @@ details.more[open] > summary { margin-bottom: 4px; }
 .nav-logout { margin-top: 14px; padding: 12px 12px; border: 0; border-top: 1px solid rgba(255, 255, 255, .14); border-radius: 0; background: transparent; color: #c5d8d2; font: inherit; text-align: left; cursor: pointer; }
 .nav-logout:hover { color: #fff; }
 @media (max-width: 900px) { .nav-logout { padding: 12px 14px; } }
+
+/* Nama mart yang bisa diklik di tabel laporan */
+.row-link { color: var(--water-dark); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.row-link:hover { color: var(--water); }
+
+button.row-link { background: none; border: 0; padding: 0; font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
+
+/* Daftar per tanggal (Produksi, Pengeluaran): satu baris ringkas per tanggal, klik untuk membuka */
+.days { display: grid; gap: 10px; }
+.day { border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; }
+.day > summary { cursor: pointer; padding: 14px 18px; min-height: 52px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 16px; list-style-position: inside; }
+.day > summary:hover { background: var(--water-tint); }
+.day[open] > summary { border-bottom: 1px solid var(--line); }
+.day-title { font-weight: 800; }
+.day-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; color: var(--ink-soft); font-size: .9rem; }
+.day-meta b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.day-body { padding: 0; }
+.day-body .empty { padding: 16px 18px; }
+.day-body th:first-child, .day-body td:first-child { padding-left: 18px; }
+.day-body th:last-child, .day-body td:last-child { padding-right: 18px; }
+.days > .btn { justify-self: center; }
+.code-preview { margin: 4px 0 14px; color: var(--ink-soft); }
+.code-preview strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+
+/* Beranda */
+.home-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-bottom: 22px; }
+.home-card { display: grid; align-content: start; gap: 6px; padding: 20px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--ink); text-align: left; font: inherit; }
+.home-card .hc-label { color: var(--ink-soft); font-weight: 600; font-size: .9rem; }
+.home-card .hc-value { font-size: clamp(1.5rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.home-card .hc-value.date { font-size: clamp(1.2rem, 3vw, 1.6rem); }
+.home-card .hc-note { color: var(--ink-soft); font-size: .88rem; }
+.home-card.cash { background: var(--ink); border-color: var(--ink); color: #eef6f3; }
+.home-card.cash .hc-label, .home-card.cash .hc-note { color: #b9d0c9; }
+.home-card.cash .hc-note a { color: #fff; }
+.home-card .hc-value.loss { color: #ffb4a8; }
+.home-card.action { cursor: pointer; width: 100%; }
+.home-card.action:hover, .home-card.action.on { border-color: var(--water); background: var(--water-tint); }
+.home-card.action .hc-note { color: var(--water-dark); font-weight: 600; }
+@media (max-width: 640px) { .day > summary { padding: 14px; } .home-card { padding: 16px; } }
