@@ -69,9 +69,19 @@ Tidak ada lagi membuat batch satu per satu. Satu catatan produksi = tanggal + **
 Contoh: potong 50 kelapa, 20 botol 620 ml dan 50 botol 600 ml, langsung terlihat total air 42,4 liter (0,85 liter per kelapa).
 
 - Stok gudang dicatat **per ukuran** (620 dan 600), bukan per batch. Saat kirim ke mart, stok ukuran itu terpotong sendiri dan otomatis mengambil yang paling dekat expired.
-- Botol, tutup, dan label otomatis sama dengan total botol (bisa diubah di bagian lipat "Botol, tutup, label, dan biaya lain"). Kelapa dihitung dari jumlah yang dipotong.
+- Produksi hanya menghitung air kelapa (kelapa dipotong + biaya lain seperti gas dan tenaga kerja). Botol kosong dan stiker dihitung **per mart** (lihat bagian di bawah).
 - Modal produksi dibagi ke 620 ml dan 600 ml sesuai total liter masing-masing, jadi HPP per botol tetap akurat.
 - Data lama: batch lama yang belum punya ukuran dianggap botol 600 ml. Kalau data lama hanya uji coba, pakai Pengaturan > Hapus transaksi saja.
+
+### Bahan kemasan per mart (HPP botol kosong)
+
+Saat **Mart baru** atau **Ubah mart**, isi bahan untuk 1 botol kosong tiap ukuran, mis. Galang Mart 600 ml: Botol 600ml × 1, Stiker A × 1, Stiker B × 1.
+Harga tiap bahan diambil dari menu **Bahan** (harga per satuan = total bayar dibagi jumlah yang bagus, jadi beli 100 stiker Rp50.000 berarti 1 stiker Rp500). Begitu disimpan, harga 1 botol kosong untuk mart itu langsung muncul.
+
+- Di halaman Mart tampil **HPP per botol** = HPP air kelapa dari produksi + harga kemasan mart itu.
+- Saat **Tambah pengiriman**, stok bahan kemasan (botol, stiker) terpotong sesuai jumlah botol dikirim, dan HPP pengiriman itu dikunci. Kalau resep mart diubah nanti, pengiriman lama tidak berubah.
+- Laba, expired, dan retur rusak memakai HPP lengkap ini (air kelapa + kemasan).
+- Mart yang belum diisi bahan kemasan tetap bisa dikirimi, tapi HPP-nya baru air kelapa dan muncul peringatan.
 
 ## Alur harian (7 menu)
 

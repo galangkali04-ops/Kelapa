@@ -63,6 +63,7 @@ function applyVisit(db, body) {
     remainingAtPartner -= handled;
   }
 
+  const recipe = (z) => ((partner.pack && partner.pack[z]) || []).map((r) => ({ materialId: r.materialId, qty: num(r.qty) })).filter((r) => r.materialId && r.qty > 0);
   const used = [];
   for (const z of SIZES) {
     const newQty = f.newQty[z];
@@ -82,7 +83,7 @@ function applyVisit(db, body) {
     for (const b of fresh) {
       if (!need) break;
       const qty = Math.min(need, b.stockWarehouse);
-      add('deliveries', { batchId: b.id, partnerId: partner.id, qty, price });
+      add('deliveries', { batchId: b.id, partnerId: partner.id, qty, price, packItems: recipe(z) });
       used.push({ code: b.code, size: z, qty }); need -= qty;
     }
     delivered += newQty;

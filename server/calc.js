@@ -36,9 +36,10 @@ function inventory(db) {
     ...(db.purchases || []).map((x) => ({ k: 0, x })),
     ...db.batches.map((x) => ({ k: 1, x })),
     ...(db.stockouts || []).map((x) => ({ k: 2, x })),
+    ...(db.deliveries || []).filter((d) => (d.packItems || []).length).map((x) => ({ k: 3, x })),
   ].sort((a, b) => (a.x.date || '').localeCompare(b.x.date || '') || a.k - b.k || (a.x.createdAt || '').localeCompare(b.x.createdAt || ''));
 
-  const batchItems = new Map(); const batchCash = new Map(); const stockoutLoss = new Map(); const purchaseView = new Map();
+  const batchItems = new Map(); const batchCash = new Map(); const stockoutLoss = new Map(); const purchaseView = new Map(); const deliveryPack = new Map();
   for (const { k, x } of events) {
     if (k === 0) {
       const m = mats.get(x.materialId);
@@ -57,6 +58,17 @@ function inventory(db) {
         return { ...i, tracked: false };
       }));
       batchCash.set(x.id, untracked);
+    } else if (k === 3) {
+      // Kemasan per botol (botol kosong, stiker, dll) dipotong dari stok saat dikirim ke mart. Harga = harga rata-rata saat itu.
+      let unit = 0; let untracked = 0;
+      for (const i of x.packItems) {
+        const m = mats.get(i.materialId);
+        if (!m) continue;
+        const perBottle = num(i.qty);
+        const used = perBottle * num(x.qty);
+        if (m.tracked) { unit += perBottle * m.avg; m.qty -= used; m.value -= used * m.avg; } else { unit += perBottle * m.fallback; untracked += used * m.fallback; }
+      }
+      deliveryPack.set(x.id, { unit, untracked });
     } else {
       const m = mats.get(x.materialId);
       const qty = num(x.qty);
@@ -65,12 +77,20 @@ function inventory(db) {
       stockoutLoss.set(x.id, qty * price);
     }
   }
-  return { mats, batchItems, batchCash, stockoutLoss, purchaseView };
+  return { mats, batchItems, batchCash, stockoutLoss, purchaseView, deliveryPack };
 }
 
 function compute(db) {
   const inv = inventory(db);
-  const partners = new Map(db.partners.map((p) => [p.id, { ...p, remaining: 0 }]));
+  const packOf = (p, z) => (p.pack && Array.isArray(p.pack[z]) ? p.pack[z] : []).map((r) => {
+    const m = inv.mats.get(r.materialId);
+    const price = m ? (m.tracked ? m.avg : m.fallback) : 0;
+    return { materialId: r.materialId, name: m ? m.name : '?', unit: m ? m.unit : '', qty: num(r.qty), price, sub: num(r.qty) * price };
+  });
+  const partners = new Map(db.partners.map((p) => {
+    const packDetail = { 620: packOf(p, '620'), 600: packOf(p, '600') };
+    return [p.id, { ...p, remaining: 0, packDetail, packCost: { 620: sum(packDetail[620], (r) => r.sub), 600: sum(packDetail[600], (r) => r.sub) } }];
+  }));
 
   const batches = new Map();
   for (const b of db.batches) {
@@ -84,7 +104,7 @@ function compute(db) {
       hpp: good > 0 ? totalCost / good : 0,
       expiryDate: addDays(b.date, b.shelfLifeDays),
       delivered: 0, sold: 0, revenue: 0, returnedGood: 0, returnedBad: 0,
-      expiredWh: 0, expiredPartner: 0, remainingAtPartners: 0,
+      expiredWh: 0, expiredPartner: 0, remainingAtPartners: 0, cogs: 0, lossAcc: 0,
     });
   }
 
@@ -95,7 +115,8 @@ function compute(db) {
     deliveries.set(d.id, {
       ...d,
       batchCode: b ? b.code : '?', partnerName: p ? p.name : '?', size: b ? b.size : '600',
-      hpp: b ? b.hpp : 0, expiryDate: b ? b.expiryDate : '',
+      waterHpp: b ? b.hpp : 0, packCost: (inv.deliveryPack.get(d.id) || {}).unit || 0,
+      hpp: (b ? b.hpp : 0) + ((inv.deliveryPack.get(d.id) || {}).unit || 0), expiryDate: b ? b.expiryDate : '',
       sold: 0, returned: 0, expired: 0, revenue: 0, unpaid: 0,
     });
     if (b) b.delivered += num(d.qty);
@@ -110,7 +131,7 @@ function compute(db) {
       d.sold += qty; d.revenue += total;
       if (!s.paid) d.unpaid += total;
       const b = batches.get(d.batchId);
-      if (b) { b.sold += qty; b.revenue += total; }
+      if (b) { b.sold += qty; b.revenue += total; b.cogs += cogs; }
     }
     return {
       ...s, total, cogs, profit: total - cogs,
@@ -125,7 +146,7 @@ function compute(db) {
     if (d) {
       d.returned += qty;
       const b = batches.get(d.batchId);
-      if (b) { if (r.condition === 'rusak') b.returnedBad += qty; else b.returnedGood += qty; }
+      if (b) { if (r.condition === 'rusak') { b.returnedBad += qty; b.lossAcc += qty * d.hpp; } else b.returnedGood += qty; }
     }
     return {
       ...r, loss: r.condition === 'rusak' ? qty * (d ? d.hpp : 0) : 0,
@@ -139,11 +160,11 @@ function compute(db) {
     const b = batches.get(d ? d.batchId : e.batchId);
     const qty = num(e.qty);
     if (d) d.expired += qty;
-    if (b) { if (d) b.expiredPartner += qty; else b.expiredWh += qty; }
+    if (b) { if (d) { b.expiredPartner += qty; b.lossAcc += qty * d.hpp; } else b.expiredWh += qty; }
     return {
       ...e, batchId: b ? b.id : e.batchId, batchCode: b ? b.code : '?',
       partnerId: d ? d.partnerId : '', partnerName: d ? d.partnerName : 'Gudang',
-      loss: qty * (b ? b.hpp : 0),
+      loss: qty * (d ? d.hpp : b ? b.hpp : 0),
     };
   });
 
@@ -158,9 +179,8 @@ function compute(db) {
     b.stockWarehouse = num(b.goodBottles) - b.delivered + b.returnedGood - b.expiredWh;
     b.stockTotal = b.stockWarehouse + b.remainingAtPartners;
     b.expired = b.expiredWh + b.expiredPartner;
-    b.cogs = b.sold * b.hpp;
     b.grossProfit = b.revenue - b.cogs;
-    b.loss = (b.expired + b.returnedBad) * b.hpp;
+    b.loss = b.lossAcc + b.expiredWh * b.hpp;
   }
   return { partners, batches, deliveries, salesView, returnsView, expirationsView, inv };
 }
@@ -193,6 +213,8 @@ function usage(db, col, id) {
       if ((db.purchases || []).some((p) => p.materialId === id) || (db.stockouts || []).some((s) => s.materialId === id)) {
         return 'Bahan ini sudah punya catatan belanja atau bahan terbuang. Hapus catatan itu dulu.';
       }
+      if (db.partners.some((p) => Object.values(p.pack || {}).some((rows) => (rows || []).some((r) => r.materialId === id)))) return 'Bahan ini dipakai di kemasan sebuah mart. Hapus dulu dari bahan kemasan mart tersebut.';
+      if (db.deliveries.some((d) => (d.packItems || []).some((i) => i.materialId === id))) return 'Bahan ini sudah terpakai di pengiriman ke mart, jadi tidak bisa dihapus.';
       return db.batches.some((b) => (b.items || []).some((i) => i.materialId === id))
         ? 'Bahan ini sudah dipakai di batch produksi. Ubah jumlahnya jadi 0 di batch tersebut atau biarkan saja.' : null;
     case 'partners':
@@ -323,7 +345,8 @@ function cashSummary(db, c) {
   const received = sum(c.salesView.filter((s) => s.paid), (s) => s.total);
   const purchases = sum(db.purchases || [], (p) => num(p.total));
   const expenses = sum(db.expenses || [], (x) => num(x.amount));
-  const production = sum([...c.batches.values()], (b) => b.extraCost + b.untrackedCost);
+  const production = sum([...c.batches.values()], (b) => b.extraCost + b.untrackedCost)
+    + sum([...c.inv.deliveryPack.values()], (x) => x.untracked);
   const batchList = [...c.batches.values()];
   const stockValue = sum([...c.inv.mats.values()].filter((m) => m.tracked), (m) => Math.max(0, m.value))
     + sum(batchList, (b) => Math.max(0, b.stockTotal) * b.hpp);
@@ -349,7 +372,8 @@ function home(db) {
     inToday: round(sum(buyToday.filter((p) => p.materialId === m.id), (p) => num(p.qty) - num(p.damaged))),
     damagedToday: round(sum(buyToday.filter((p) => p.materialId === m.id), (p) => num(p.damaged))),
     outToday: round(sum(batchToday, (b) => sum(b.items.filter((i) => i.materialId === m.id), (i) => num(i.qty)))
-      + sum(outToday.filter((s) => s.materialId === m.id), (s) => num(s.qty))),
+      + sum(outToday.filter((s) => s.materialId === m.id), (s) => num(s.qty))
+      + sum(db.deliveries.filter((d) => d.date === t), (d) => num(d.qty) * sum((d.packItems || []).filter((i) => i.materialId === m.id), (i) => num(i.qty)))),
   }));
 
   const salesToday = c.salesView.filter((s) => s.date === t);

@@ -3,7 +3,8 @@
 import { h, rp, int, fmtDate, today, pageHeader, openDialog, closeDialog, formShell, toast, dataTable, setChildren } from '../ui.js';
 import { api } from '../api.js';
 import { DEF } from '../config.js';
-import { openForm, removeRow } from '../crudkit.js';
+import { removeRow } from '../crudkit.js';
+import { openPartnerForm } from './partnerform.js';
 
 const SIZES = ['620', '600'];
 const badge = (text, cls = '') => h('span', { class: `badge ${cls}` }, text);
@@ -53,9 +54,20 @@ export function renderVisit(root, page, ctx) {
   };
   pick.addEventListener('change', () => choose(pick.value));
 
-  const newPartner = () => openForm(DEF.partners, null, ctx, { after: (saved) => history.replaceState(null, '', `#/visit?partner=${saved.id}`) });
+  const newPartner = () => openPartnerForm(null, ctx, { after: (saved) => history.replaceState(null, '', `#/visit?partner=${saved.id}`) });
 
   const warehouse = (z) => ctx.data.batches.filter((b) => sizeOf(b) === z).reduce((s, b) => s + Math.max(0, b.stockWarehouse), 0);
+  // HPP air kelapa per botol: rata-rata dari stok gudang, atau produksi terakhir kalau stok kosong.
+  const waterHpp = (z) => {
+    const lots = ctx.data.batches.filter((b) => sizeOf(b) === z);
+    const stocked = lots.filter((b) => b.stockWarehouse > 0);
+    const q = stocked.reduce((s, b) => s + b.stockWarehouse, 0);
+    if (q > 0) return stocked.reduce((s, b) => s + b.hpp * b.stockWarehouse, 0) / q;
+    const last = lots.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''))[0];
+    return last ? last.hpp : 0;
+  };
+  const packOfPartner = (partner, z) => Number((partner.packCost || {})[z]) || 0;
+  const hasRecipe = (partner) => SIZES.some((z) => ((partner.packDetail || {})[z] || []).length > 0);
   const openOf = (partner) => ctx.data.deliveries.filter((d) => d.partnerId === partner.id && d.remaining > 0)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.createdAt || '').localeCompare(b.createdAt || ''));
 
@@ -107,7 +119,8 @@ export function renderVisit(root, page, ctx) {
         h('div', { class: 'kv total' }, h('span', {}, 'Total dikirim'), h('span', {}, `${int(total)} botol`)),
         h('div', { class: 'kv' }, h('span', {}, 'Nilai pengiriman'), h('span', {}, rp(value))),
         h('div', { class: 'kv' }, h('span', {}, `Botol di ${partner.name} setelah ini`), h('span', {}, `${int(totalOpen + total)} botol`)),
-        ...SIZES.map((z) => h('div', { class: 'kv' }, h('span', {}, `Sisa stok gudang ${z} ml`), h('span', {}, `${int(Math.max(0, warehouse(z) - st.qty[z]))} botol`))));
+        ...SIZES.map((z) => h('div', { class: 'kv' }, h('span', {}, `Sisa stok gudang ${z} ml`), h('span', {}, `${int(Math.max(0, warehouse(z) - st.qty[z]))} botol`))),
+        ...SIZES.filter((z) => st.qty[z] > 0).map((z) => h('div', { class: 'kv' }, h('span', {}, `HPP botol ${z} ml (air ${rp(waterHpp(z))} + kemasan ${rp(packOfPartner(partner, z))})`), h('span', {}, rp(waterHpp(z) + packOfPartner(partner, z))))));
     };
     const rows = SIZES.map((z) => {
       const qty = numInput((v) => { st.qty[z] = v; refresh(); });
@@ -197,7 +210,7 @@ export function renderVisit(root, page, ctx) {
     setChildren(body,
       h('div', { class: 'row-actions', style: 'margin-bottom:12px' },
         h('button', { class: 'btn small', type: 'button', onclick: () => choose('') }, 'Ganti mart'),
-        h('button', { class: 'btn small', type: 'button', onclick: () => openForm(DEF.partners, partner, ctx) }, 'Ubah mart'),
+        h('button', { class: 'btn small', type: 'button', onclick: () => openPartnerForm(partner, ctx) }, 'Ubah mart'),
         h('button', { class: 'btn small danger', type: 'button', onclick: () => removeRow(DEF.partners, partner, ctx, `mart ${partner.name}`) }, 'Hapus mart')),
       h('section', { class: 'panel' },
         h('h2', {}, partner.name),
@@ -207,6 +220,21 @@ export function renderVisit(root, page, ctx) {
         h('div', { class: 'form-actions', style: 'justify-content:flex-start' },
           h('button', { class: 'btn primary', type: 'button', onclick: () => openDelivery(partner) }, 'Tambah pengiriman'),
           h('button', { class: 'btn', type: 'button', onclick: () => openNota(partner) }, 'Catat hasil nota'))),
+      h('section', { class: 'panel' },
+        h('h2', {}, 'HPP per botol'),
+        h('p', { class: 'muted', style: 'margin:4px 0 0' }, 'Air kelapa dari produksi + botol kosong, stiker, dan bahan kemasan mart ini.'),
+        h('div', { class: 'stats', style: 'margin:12px 0' },
+          ...SIZES.map((z) => h('div', { class: 'stat' },
+            h('div', { class: 'v' }, rp(waterHpp(z) + packOfPartner(partner, z))),
+            h('div', { class: 'l' }, `HPP botol ${z} ml`),
+            h('div', { class: 'muted', style: 'font-size:.85rem' }, `Air kelapa ${rp(waterHpp(z))} + kemasan ${rp(packOfPartner(partner, z))}`)))),
+        hasRecipe(partner)
+          ? h('details', { class: 'more' }, h('summary', {}, 'Rincian bahan kemasan per botol'),
+            ...SIZES.filter((z) => (partner.packDetail[z] || []).length).map((z) => h('div', { style: 'margin-top:10px' },
+              h('b', {}, `Botol kosong ${z} ml: ${rp(packOfPartner(partner, z))}`),
+              ...partner.packDetail[z].map((r) => h('div', { class: 'kv' }, h('span', {}, `${r.name} × ${r.qty}`), h('span', {}, rp(r.sub)))))))
+          : h('p', { class: 'form-error' }, 'Mart ini belum diisi bahan kemasan, jadi HPP belum termasuk botol dan stiker. ',
+            h('button', { class: 'btn small', type: 'button', onclick: () => openPartnerForm(partner, ctx) }, 'Isi bahan kemasan'))),
       open.length ? h('section', { class: 'panel' }, h('h2', {}, 'Botol yang masih di mart'),
         h('ul', { class: 'open-list' }, open.map((d) => h('li', {}, `${fmtDate(d.date)} · ${sizeOf(d)} ml · sisa ${int(d.remaining)} dari ${int(d.qty)} botol @ ${rp(d.price)}`)))) : null,
       historySection(partner.id));

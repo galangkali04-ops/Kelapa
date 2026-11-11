@@ -13,6 +13,7 @@ const schemas = {
     type: { t: 'str', label: 'Tipe' },
     scheme: { t: 'enum', values: ['titip', 'putus'], label: 'Skema' },
     price: { t: 'num0', label: 'Harga jual default' },
+    pack: { t: 'pack' },
     contact: { t: 'str', label: 'Kontak' },
     address: { t: 'str', label: 'Alamat' },
     note: { t: 'str', label: 'Catatan' },
@@ -40,6 +41,7 @@ const schemas = {
     partnerId: { t: 'ref', req: true, label: 'Mitra' },
     qty: { t: 'posint', label: 'Jumlah botol' },
     price: { t: 'num0', label: 'Harga per botol' },
+    packItems: { t: 'packlist' },
     note: { t: 'str', label: 'Catatan' },
   },
   sales: {
@@ -110,6 +112,11 @@ const validators = {
   reminders: (v) => (v.repeat === 'once' && !v.date ? 'Tanggal wajib diisi untuk pengingat sekali saja.' : null),
 };
 
+// Daftar bahan kemasan per 1 botol: [{ materialId, qty }]. Baris tanpa bahan atau jumlah 0 dibuang.
+const cleanPack = (rows) => (Array.isArray(rows) ? rows : [])
+  .map((r) => ({ materialId: String((r && r.materialId) || ''), qty: Number(r && r.qty) }))
+  .filter((r) => r.materialId && Number.isFinite(r.qty) && r.qty > 0);
+
 const isSimple = (v) => ['string', 'number', 'boolean'].includes(typeof v);
 
 function sanitize(col, body) {
@@ -173,6 +180,15 @@ function sanitize(col, body) {
         if (v.some((i) => !i.name || !Number.isFinite(i.qty) || i.qty < 0 || i.price < 0)) {
           return { error: 'Ada baris bahan yang tidak valid (nama, jumlah, atau harga).' };
         }
+        break;
+      case 'pack': {
+        const src = v && typeof v === 'object' ? v : {};
+        v = {};
+        for (const z of ['620', '600']) v[z] = cleanPack(src[z]);
+        break;
+      }
+      case 'packlist':
+        v = cleanPack(v);
         break;
       case 'costs':
         v = (Array.isArray(v) ? v : []).map((c) => ({ name: String(c.name || '').trim().slice(0, 120), amount: Number(c.amount) }));

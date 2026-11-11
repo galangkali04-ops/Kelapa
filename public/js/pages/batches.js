@@ -6,7 +6,6 @@ import { api } from '../api.js';
 const SIZES = ['620', '600'];
 const LITER = { 620: 0.62, 600: 0.6 };
 const COST_SUGGESTIONS = ['Tenaga kerja', 'Gas / listrik', 'Ongkos kirim', 'Es batu', 'Dus / kemasan', 'Sewa tempat'];
-const AUTO_BY_BOTTLE = /botol|tutup|label|stiker/i; // bahan yang jumlahnya otomatis sama dengan total botol
 const openDays = new Set();
 const fmt2 = (n) => (Number(n) || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
 const liters = (q620, q600) => (Number(q620) || 0) * LITER[620] + (Number(q600) || 0) * LITER[600];
@@ -74,7 +73,7 @@ export function renderBatches(root, page, ctx) {
     : null;
 
   setChildren(root,
-    pageHeader('Produksi', 'Isi kelapa yang dipotong dan jumlah botol 620 ml dan 600 ml. Total liter dan modal dihitung otomatis, stok gudang langsung bertambah.',
+    pageHeader('Produksi', 'Isi kelapa yang dipotong dan jumlah botol 620 ml dan 600 ml. Total liter dan HPP air kelapa dihitung otomatis. Botol kosong dan stiker dihitung per mart saat pengiriman.',
       h('button', { class: 'btn primary', onclick: () => openProductionForm(null, ctx) }, 'Catat produksi')),
     h('div', { class: 'stats' },
       stat(`${int(stock('620'))} botol`, 'Stok gudang 620 ml'),
@@ -167,7 +166,7 @@ function openProductionForm(prod, ctx) {
       const found = prod.items.find((i) => i.materialId === m.id);
       return { materialId: m.id, name: m.name, unit: m.unit, qty: found ? found.qty : '', price: found ? found.price : priceOf(m), auto: false, m };
     })
-    : others.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: priceOf(m), auto: AUTO_BY_BOTTLE.test(m.name), m }));
+    : others.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: priceOf(m), auto: false, m }));
   const costs = isEdit ? prod.costs.map((c) => ({ ...c })) : [];
 
   const itemsBox = h('div'); const costsBox = h('div');
@@ -237,9 +236,9 @@ function openProductionForm(prod, ctx) {
   const content = h('div', {},
     main, literEl,
     h('details', { class: 'more', open: isEdit && (prod.items.length > 0 || prod.costs.length > 0) },
-      h('summary', {}, 'Botol, tutup, label, dan biaya lain (otomatis, bisa diubah)'),
+      h('summary', {}, 'Bahan tambahan dan biaya lain (opsional)'),
       h('div', { class: 'lines' },
-        h('p', { class: 'muted', style: 'margin:4px 0 8px' }, 'Botol, tutup, dan label otomatis sama dengan total botol. Ubah kalau berbeda. Kelapa sudah dihitung dari jumlah yang dipotong.'),
+        h('p', { class: 'muted', style: 'margin:4px 0 8px' }, 'Botol kosong dan stiker tidak diisi di sini, tapi dihitung per mart saat pengiriman. Kelapa sudah dihitung dari jumlah yang dipotong. Isi bagian ini hanya kalau ada bahan lain yang ikut terpakai saat produksi.'),
         itemsBox),
       h('div', { class: 'lines' }, h('h3', {}, 'Biaya lain (tenaga kerja, gas, dll)'), costsBox,
         h('datalist', { id: 'dl_costs' }, COST_SUGGESTIONS.map((s) => h('option', { value: s }))),
