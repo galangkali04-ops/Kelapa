@@ -80,7 +80,7 @@ function compute(db) {
     const totalCost = itemsCost + extraCost;
     const good = num(b.goodBottles);
     batches.set(b.id, {
-      ...b, items, itemsCost, extraCost, totalCost, untrackedCost: inv.batchCash.get(b.id) || 0,
+      ...b, size: b.size || '600', items, itemsCost, extraCost, totalCost, untrackedCost: inv.batchCash.get(b.id) || 0,
       hpp: good > 0 ? totalCost / good : 0,
       expiryDate: addDays(b.date, b.shelfLifeDays),
       delivered: 0, sold: 0, revenue: 0, returnedGood: 0, returnedBad: 0,
@@ -94,7 +94,7 @@ function compute(db) {
     const p = partners.get(d.partnerId);
     deliveries.set(d.id, {
       ...d,
-      batchCode: b ? b.code : '?', partnerName: p ? p.name : '?',
+      batchCode: b ? b.code : '?', partnerName: p ? p.name : '?', size: b ? b.size : '600',
       hpp: b ? b.hpp : 0, expiryDate: b ? b.expiryDate : '',
       sold: 0, returned: 0, expired: 0, revenue: 0, unpaid: 0,
     });
@@ -198,6 +198,7 @@ function usage(db, col, id) {
     case 'partners':
       return db.deliveries.some((d) => d.partnerId === id) ? 'Mitra ini sudah punya pengiriman. Hapus pengirimannya dulu.' : null;
     case 'batches':
+      if (db.batches.find((b) => b.id === id && b.productionId)) return 'Stok ini bagian dari produksi. Hapus atau ubah lewat halaman Produksi.';
       return db.deliveries.some((d) => d.batchId === id) || db.expirations.some((e) => e.batchId === id)
         ? 'Batch ini sudah dipakai di pengiriman atau data expired. Hapus data terkait dulu.' : null;
     case 'deliveries':
@@ -206,6 +207,27 @@ function usage(db, col, id) {
     default:
       return null;
   }
+}
+
+
+// Satu catatan produksi lengkap dengan angka total liter, liter per kelapa, dan stok tiap ukuran botol.
+function productionView(db, c, p) {
+  const num0 = (v) => Number(v) || 0;
+  const lots = [...c.batches.values()].filter((b) => b.productionId === p.id).sort((a, b) => Number(b.size) - Number(a.size));
+  const q620 = num0(p.qty620); const q600 = num0(p.qty600);
+  const totalLiters = q620 * 0.62 + q600 * 0.6;
+  const coconuts = num0(p.coconuts);
+  const totalCost = sum(lots, (b) => b.totalCost);
+  return {
+    ...p, qty620: q620, qty600: q600, totalBottles: q620 + q600, coconuts, totalLiters,
+    litersPerCoconut: coconuts > 0 ? totalLiters / coconuts : 0,
+    bottlesPerCoconut: coconuts > 0 ? (q620 + q600) / coconuts : 0,
+    totalCost, lots,
+    stockWarehouse: sum(lots, (b) => b.stockWarehouse),
+    remainingAtPartners: sum(lots, (b) => b.remainingAtPartners),
+    expiryDate: lots.length ? lots.map((b) => b.expiryDate).sort()[0] : '',
+    stockTotal: sum(lots, (b) => b.stockTotal),
+  };
 }
 
 const byDateDesc = (a, b) => (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || '');
@@ -219,6 +241,7 @@ function list(db, col) {
     });
     case 'partners': return [...c.partners.values()].sort((a, b) => a.name.localeCompare(b.name));
     case 'batches': return [...c.batches.values()].sort(byDateDesc);
+    case 'productions': return (db.productions || []).map((p) => productionView(db, c, p)).sort(byDateDesc);
     case 'deliveries': return [...c.deliveries.values()].sort(byDateDesc);
     case 'sales': return c.salesView.sort(byDateDesc);
     case 'returns': return c.returnsView.sort(byDateDesc);
@@ -362,6 +385,8 @@ function home(db) {
       deliveredToday: sum([...c.deliveries.values()].filter((d) => d.date === t), (d) => num(d.qty)),
       soldToday: sum(salesToday, (s) => num(s.qty)),
       warehouse: sum([...c.batches.values()], (b) => b.stockWarehouse),
+      warehouse620: sum([...c.batches.values()].filter((b) => b.size === '620'), (b) => b.stockWarehouse),
+      warehouse600: sum([...c.batches.values()].filter((b) => b.size === '600'), (b) => b.stockWarehouse),
       atPartners: sum(open, (d) => d.remaining),
     },
     money: {

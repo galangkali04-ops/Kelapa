@@ -5,7 +5,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const FILE = process.env.DATA_FILE || path.join(__dirname, '..', 'data', 'db.json');
-const COLLECTIONS = ['materials', 'partners', 'batches', 'deliveries', 'sales', 'returns', 'expirations', 'expenses', 'reminders', 'purchases', 'stockouts', 'capital'];
+const COLLECTIONS = ['materials', 'partners', 'batches', 'deliveries', 'sales', 'returns', 'expirations', 'expenses', 'reminders', 'purchases', 'stockouts', 'capital', 'productions'];
 
 function defaults() {
   const mat = (name, unit) => ({ id: crypto.randomUUID(), name, unit, price: 0, note: '', createdAt: new Date().toISOString() });
@@ -24,7 +24,7 @@ function defaults() {
       notifUnpaidDays: 3,
     },
     materials: [mat('Kelapa', 'butir'), mat('Botol', 'pcs'), mat('Tutup botol', 'pcs'), mat('Label / stiker', 'pcs')],
-    partners: [], batches: [], deliveries: [], sales: [], returns: [], expirations: [], expenses: [], reminders: [], purchases: [], stockouts: [], capital: [],
+    partners: [], batches: [], deliveries: [], sales: [], returns: [], expirations: [], expenses: [], reminders: [], purchases: [], stockouts: [], capital: [], productions: [],
   };
 }
 

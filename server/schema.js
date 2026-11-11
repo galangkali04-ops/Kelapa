@@ -27,6 +27,12 @@ const schemas = {
     items: { t: 'items' },
     costs: { t: 'costs' },
     note: { t: 'str', label: 'Catatan' },
+    size: { t: 'str', label: 'Ukuran' },
+    productionId: { t: 'str', label: 'Produksi' },
+  },
+  productions: {
+    date: { t: 'date', label: 'Tanggal' },
+    note: { t: 'str', label: 'Catatan' },
   },
   deliveries: {
     date: { t: 'date', label: 'Tanggal' },

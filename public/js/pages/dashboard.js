@@ -59,7 +59,7 @@ export async function renderDashboard(root, page, ctx) {
     { key: 'revenue', label: 'Revenue', type: 'rp' }, { key: 'grossProfit', label: 'Gross profit', type: 'rp' }, { key: 'unpaid', label: 'Belum dibayar', type: 'rp' },
   ];
   const batchCols = [
-    { key: 'code', label: 'Batch' }, { key: 'goodBottles', label: 'Botol jadi', type: 'int' }, { key: 'totalCost', label: 'Modal', type: 'rp' },
+    { key: 'code', label: 'Produksi' }, { key: 'goodBottles', label: 'Botol jadi', type: 'int' }, { key: 'totalCost', label: 'Modal', type: 'rp' },
     { key: 'hpp', label: 'HPP / botol', type: 'rp' }, { key: 'sold', label: 'Terjual', type: 'int' }, { key: 'expired', label: 'Expired', type: 'int' },
     { key: 'stockTotal', label: 'Sisa stok', type: 'int' }, { key: 'revenue', label: 'Revenue', type: 'rp' }, { key: 'grossProfit', label: 'Gross profit', type: 'rp' },
   ];
@@ -72,5 +72,5 @@ export async function renderDashboard(root, page, ctx) {
       ? [trendChart(rep.trend), h('div', { class: 'legend' }, h('span', {}, h('i', { style: 'background:var(--water)' }), 'Revenue'), h('span', {}, h('i', { style: 'background:var(--husk)' }), 'Gross profit'))]
       : h('p', { class: 'empty' }, 'Belum ada penjualan pada periode ini.')),
     fold('Per mart (klik nama mart untuk melihat laporannya)', dataTable(partnerCols, rep.perPartner, { emptyText: 'Belum ada aktivitas mart pada periode ini.' })),
-    fold('Per batch', dataTable(batchCols, rep.perBatch, { emptyText: 'Belum ada batch pada periode ini.' })));
+    fold('Per produksi (per ukuran botol)', dataTable(batchCols, rep.perBatch, { emptyText: 'Belum ada produksi pada periode ini.' })));
 }

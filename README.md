@@ -63,6 +63,16 @@ Buka **Pengaturan**, scroll ke **Mulai dari awal**. Ada dua pilihan:
 Keduanya meminta Anda mengetik **HAPUS**. Sebelum menghapus, server menyimpan salinan otomatis di folder `data/` (nama `backup-sebelum-reset-<tanggal>-<jam>.json`). Kalau menyesal, pakai **Pulihkan dari file** dan pilih file itu.
 Cara manual: hentikan server, hapus file `data/db.json`, jalankan lagi. Data baru dibuat otomatis.
 
+### Produksi disederhanakan (620 ml dan 600 ml)
+
+Tidak ada lagi membuat batch satu per satu. Satu catatan produksi = tanggal + **kelapa dipotong** + **total botol 620 ml** + **total botol 600 ml**.
+Contoh: potong 50 kelapa, 20 botol 620 ml dan 50 botol 600 ml, langsung terlihat total air 42,4 liter (0,85 liter per kelapa).
+
+- Stok gudang dicatat **per ukuran** (620 dan 600), bukan per batch. Saat kirim ke mart, stok ukuran itu terpotong sendiri dan otomatis mengambil yang paling dekat expired.
+- Botol, tutup, dan label otomatis sama dengan total botol (bisa diubah di bagian lipat "Botol, tutup, label, dan biaya lain"). Kelapa dihitung dari jumlah yang dipotong.
+- Modal produksi dibagi ke 620 ml dan 600 ml sesuai total liter masing-masing, jadi HPP per botol tetap akurat.
+- Data lama: batch lama yang belum punya ukuran dianggap botol 600 ml. Kalau data lama hanya uji coba, pakai Pengaturan > Hapus transaksi saja.
+
 ## Alur harian (7 menu)
 
 Menu mengikuti urutan kerja: **Beranda, Bahan, Produksi, Mart, Pengeluaran, Laporan, Pengaturan**. Di HP dibuka lewat tombol hamburger.
@@ -70,8 +80,9 @@ Menu mengikuti urutan kerja: **Beranda, Bahan, Produksi, Mart, Pengeluaran, Lapo
 | Kejadian | Menu | Hasilnya |
 |---|---|---|
 | Beli kelapa, botol, tutup, label (kelapa masuk) | **Bahan** > Belanja bahan | Stok naik, harga rata-rata dihitung otomatis |
-| Produksi hari ini (kelapa keluar) | **Produksi** | Isi botol jadi dan jumlah bahan yang terpakai (mis. kelapa). HPP dihitung sendiri |
-| Botol ke mart, nota lama, bayar | **Mart** | Penjualan, retur, expired, dan pengiriman baru tercatat sekaligus |
+| Produksi hari ini | **Produksi** > Catat produksi | Isi kelapa yang dipotong + total botol 620 ml + total botol 600 ml. Total liter, liter per kelapa, dan HPP dihitung sendiri. Stok gudang naik per ukuran |
+| Kirim botol ke mart | **Mart** > pilih mart > Tambah pengiriman | Isi jumlah 620 ml dan 600 ml, stok gudang langsung terpotong |
+| Nota lama, bayar | **Mart** > Catat hasil nota | Penjualan, retur, dan expired per ukuran botol |
 | Uang keluar lain (gaji, bensin, sampah) | **Pengeluaran** | Mengurangi profit dan saldo kas |
 | Kelapa busuk, botol pecah | **Bahan** > Buang / rusak | Stok berkurang, dihitung sebagai kerugian |
 | Setor modal, tarik uang pribadi | **Pengeluaran** > Modal & tarik uang | Saldo kas cocok dengan uang asli |

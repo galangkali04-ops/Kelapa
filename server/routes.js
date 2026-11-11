@@ -4,6 +4,7 @@ const crypto = require('crypto');
 const store = require('./db');
 const calc = require('./calc');
 const visit = require('./visit');
+const production = require('./production');
 const pdf = require('./pdf');
 const { schemas, sanitize, isSimple, validators } = require('./schema');
 
@@ -143,7 +144,7 @@ api.post('/reset', (req, res) => {
 
 api.post('/restore', (req, res) => {
   const body = req.body || {};
-  if (!body.settings || !store.COLLECTIONS.filter((c) => !['expenses', 'reminders', 'purchases', 'stockouts', 'capital'].includes(c)).every((c) => Array.isArray(body[c]))) {
+  if (!body.settings || !store.COLLECTIONS.filter((c) => !['expenses', 'reminders', 'purchases', 'stockouts', 'capital', 'productions'].includes(c)).every((c) => Array.isArray(body[c]))) {
     return res.status(400).json({ error: 'File backup tidak valid.' });
   }
   const next = store.normalize(body);
@@ -152,6 +153,11 @@ api.post('/restore', (req, res) => {
   store.set(next);
   return res.json({ ok: true });
 });
+
+// Produksi: satu catatan (kelapa + botol 620 + botol 600). Stok per ukuran dibuat otomatis.
+api.post('/productions', (req, res) => mutate(res, (db) => production.create(db, req.body || {})));
+api.put('/productions/:id', (req, res) => mutate(res, (db) => production.update(db, req.params.id, req.body || {})));
+api.delete('/productions/:id', (req, res) => mutate(res, (db) => production.remove(db, req.params.id)));
 
 api.get('/:col', (req, res) => {
   if (!schemas[req.params.col]) return res.status(404).json({ error: 'Data tidak ditemukan.' });

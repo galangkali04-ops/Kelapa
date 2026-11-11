@@ -1,3 +1,6 @@
 node_modules
 data/db.json
 data/*.tmp
+data/backup-*.json
+data/auth.json
+data/sessions.json

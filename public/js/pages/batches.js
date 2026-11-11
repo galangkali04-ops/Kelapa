@@ -1,180 +1,206 @@
-// Produksi per batch: input bahan & biaya, hitung total modal dan HPP per botol.
-import { h, rp, int, fmtDate, today, daysBetween, dayGroups, dataTable, pageHeader, formShell, formDialog, buildFields, confirmBox, openDialog, closeDialog, toast, setChildren } from '../ui.js';
+// Produksi sederhana: isi tanggal, kelapa yang dipotong, jumlah botol 620 ml dan 600 ml. Selesai.
+// Total liter dan liter per kelapa langsung dihitung. Stok gudang dicatat per ukuran botol.
+import { h, rp, int, fmtDate, today, daysBetween, dayGroups, dataTable, pageHeader, formShell, formDialog, openDialog, closeDialog, confirmBox, toast, setChildren } from '../ui.js';
 import { api } from '../api.js';
 
+const SIZES = ['620', '600'];
+const LITER = { 620: 0.62, 600: 0.6 };
 const COST_SUGGESTIONS = ['Tenaga kerja', 'Gas / listrik', 'Ongkos kirim', 'Es batu', 'Dus / kemasan', 'Sewa tempat'];
+const AUTO_BY_BOTTLE = /botol|tutup|label|stiker/i; // bahan yang jumlahnya otomatis sama dengan total botol
+const openDays = new Set();
+const fmt2 = (n) => (Number(n) || 0).toLocaleString('id-ID', { maximumFractionDigits: 2 });
+const liters = (q620, q600) => (Number(q620) || 0) * LITER[620] + (Number(q600) || 0) * LITER[600];
 
-// Kelapa yang dipakai di satu batch (bahan yang namanya mengandung "kelapa") dan hasil botolnya.
-const coconutsUsed = (b) => (b.items || []).filter((i) => /kelapa/i.test(i.name)).reduce((s, i) => s + (Number(i.qty) || 0), 0);
-const openDays = new Set(); // tanggal yang sedang terbuka. Awalnya tertutup semua; tanggal yang baru disimpan otomatis terbuka
-const cleanPrefix = (p) => String(p || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
-const prefixOf = (b) => cleanPrefix(b.prefix) || cleanPrefix(String(b.code || '').split('-')[0]);
-const fmt2 = (n) => n.toLocaleString('id-ID', { maximumFractionDigits: 2 });
-
-function expiryCell(b) {
-  if (b.stockTotal <= 0) return fmtDate(b.expiryDate);
-  const left = daysBetween(b.expiryDate, today());
+function expiryCell(p) {
+  if (!p.expiryDate) return '';
+  if (p.stockTotal <= 0) return fmtDate(p.expiryDate);
+  const left = daysBetween(p.expiryDate, today());
   if (left < 0) return h('span', { class: 'badge bad' }, `Lewat ${-left} hari`);
   if (left <= 2) return h('span', { class: 'badge warn' }, left === 0 ? 'Expired hari ini' : `${left} hari lagi`);
-  return fmtDate(b.expiryDate);
+  return fmtDate(p.expiryDate);
 }
 
+const stat = (value, label) => h('div', { class: 'stat' }, h('div', { class: 'v' }, value), h('div', { class: 'l' }, label));
+
 export function renderBatches(root, page, ctx) {
-  // Di dalam satu tanggal: kode batch bisa diklik untuk rincian bahan dan biaya.
+  const prods = ctx.data.productions || [];
+  const batches = ctx.data.batches || [];
+  const stock = (z) => batches.filter((b) => (b.size || '600') === z).reduce((s, b) => s + Math.max(0, b.stockWarehouse), 0);
+
   const columns = [
-    { key: 'code', label: 'Kode batch', render: (b) => h('button', { class: 'row-link', type: 'button', title: 'Lihat rincian batch', onclick: () => showDetail(b) }, b.code) },
-    { key: 'goodBottles', label: 'Botol jadi', type: 'int' },
+    { key: 'code', label: 'Kode', render: (p) => h('button', { class: 'row-link', type: 'button', title: 'Lihat rincian', onclick: () => showDetail(p) }, p.code) },
+    { key: 'coconuts', label: 'Kelapa', type: 'int' },
+    { key: 'qty620', label: 'Botol 620 ml', type: 'int' },
+    { key: 'qty600', label: 'Botol 600 ml', type: 'int' },
+    { key: 'totalLiters', label: 'Total liter', render: (p) => `${fmt2(p.totalLiters)} L` },
+    { key: 'litersPerCoconut', label: 'Liter / kelapa', render: (p) => `${fmt2(p.litersPerCoconut)} L` },
     { key: 'totalCost', label: 'Total modal', type: 'rp' },
-    { key: 'hpp', label: 'HPP per botol', type: 'rp' },
     { key: 'stockWarehouse', label: 'Stok gudang', type: 'int' },
-    { key: 'remainingAtPartners', label: 'Di mart', type: 'int' },
     { key: 'expiryDate', label: 'Expired', render: expiryCell },
   ];
 
-  // Botol di gudang yang sudah lewat expired (botol di mart dicatat lewat halaman Mart).
-  function expireWarehouse(b) {
+  // Botol expired di gudang: pilih ukuran yang masih ada stoknya.
+  function expireWarehouse(p) {
+    const lots = p.lots.filter((b) => b.stockWarehouse > 0);
     formDialog({
-      title: `Botol expired di gudang · ${b.code}`, ctx, submitLabel: 'Simpan',
+      title: `Botol expired di gudang · ${p.code}`, ctx, submitLabel: 'Simpan',
       fields: [
         { key: 'date', label: 'Tanggal', type: 'date', required: true, default: 'today' },
-        { key: 'qty', label: `Jumlah botol (gudang ${int(b.stockWarehouse)})`, type: 'int', required: true },
+        { key: 'batchId', label: 'Ukuran botol', type: 'select', required: true, options: lots.map((b) => ({ value: b.id, label: `${b.size} ml · stok gudang ${int(b.stockWarehouse)}` })) },
+        { key: 'qty', label: 'Jumlah botol expired', type: 'int', required: true },
         { key: 'note', label: 'Catatan', type: 'text' },
       ],
       onSubmit: async (v) => {
-        await api('/expirations', { method: 'POST', body: { ...v, batchId: b.id } });
+        await api('/expirations', { method: 'POST', body: v });
         toast('Botol expired dicatat');
         await ctx.refresh();
       },
     });
   }
 
-  async function remove(b) {
-    if (!(await confirmBox(`Hapus batch ${b.code}?`))) return;
-    try { await api(`/batches/${b.id}`, { method: 'DELETE' }); toast('Batch dihapus'); await ctx.refresh(); } catch (e) { toast(e.message, 'error'); }
+  async function remove(p) {
+    if (!(await confirmBox(`Hapus produksi ${p.code}?`))) return;
+    try { await api(`/productions/${p.id}`, { method: 'DELETE' }); toast('Produksi dihapus'); await ctx.refresh(); } catch (e) { toast(e.message, 'error'); }
   }
 
-  // Rata-rata semua batch: total botol jadi dibagi total kelapa. Berguna untuk memperkirakan belanja kelapa.
-  const used = ctx.data.batches.filter((b) => coconutsUsed(b) > 0);
-  const totalCoconuts = used.reduce((s, b) => s + coconutsUsed(b), 0);
-  const totalBottles = used.reduce((s, b) => s + (Number(b.goodBottles) || 0), 0);
-  const yieldInfo = totalCoconuts > 0 && totalBottles > 0
+  // Rata-rata semua produksi, untuk memperkirakan berapa kelapa yang perlu dibeli.
+  const totalCoco = prods.reduce((s, p) => s + p.coconuts, 0);
+  const totalL = prods.reduce((s, p) => s + p.totalLiters, 0);
+  const totalB = prods.reduce((s, p) => s + p.totalBottles, 0);
+  const yieldInfo = totalCoco > 0 && totalL > 0
     ? h('p', { class: 'yield-note' },
-      h('b', {}, `1 kelapa ≈ ${fmt2(totalBottles / totalCoconuts)} botol`),
-      ` (rata-rata ${used.length} batch). Untuk 100 botol siapkan sekitar ${Math.ceil(100 * totalCoconuts / totalBottles)} kelapa.`)
+      h('b', {}, `1 kelapa ≈ ${fmt2(totalL / totalCoco)} liter (${fmt2(totalB / totalCoco)} botol)`),
+      ` · rata-rata ${prods.length} produksi. Untuk 100 botol siapkan sekitar ${Math.ceil(100 * totalCoco / totalB)} kelapa.`)
     : null;
 
-  setChildren(root, 
-    pageHeader('Produksi', 'Produksi dikelompokkan per tanggal: klik tanggal untuk melihat batch-nya, lalu klik kode batch untuk rincian bahan dan biaya.',
-      h('button', { class: 'btn primary', onclick: () => openBatchForm(null, ctx) }, 'Tambah batch')),
+  setChildren(root,
+    pageHeader('Produksi', 'Isi kelapa yang dipotong dan jumlah botol 620 ml dan 600 ml. Total liter dan modal dihitung otomatis, stok gudang langsung bertambah.',
+      h('button', { class: 'btn primary', onclick: () => openProductionForm(null, ctx) }, 'Catat produksi')),
+    h('div', { class: 'stats' },
+      stat(`${int(stock('620'))} botol`, 'Stok gudang 620 ml'),
+      stat(`${int(stock('600'))} botol`, 'Stok gudang 600 ml')),
     ...(yieldInfo ? [yieldInfo] : []),
-    dayGroups(ctx.data.batches, {
+    dayGroups(prods, {
       keep: openDays,
-      emptyText: 'Belum ada batch. Klik "Tambah batch" untuk mencatat produksi pertama.',
+      emptyText: 'Belum ada produksi. Klik "Catat produksi" untuk mulai.',
       meta: (date, list) => [
-        `${int(list.length)} batch`,
-        h('b', {}, `${int(list.reduce((n, b) => n + (Number(b.goodBottles) || 0), 0))} botol jadi`),
-        `Modal ${rp(list.reduce((n, b) => n + (Number(b.totalCost) || 0), 0))}`,
-        list.some((b) => b.stockTotal > 0 && daysBetween(b.expiryDate, today()) < 0) ? h('span', { class: 'badge bad' }, 'Ada yang lewat expired') : null,
+        `${int(list.reduce((n, p) => n + p.coconuts, 0))} kelapa`,
+        h('b', {}, `${fmt2(list.reduce((n, p) => n + p.totalLiters, 0))} liter`),
+        `${int(list.reduce((n, p) => n + p.totalBottles, 0))} botol`,
+        `Modal ${rp(list.reduce((n, p) => n + p.totalCost, 0))}`,
+        list.some((p) => p.stockTotal > 0 && daysBetween(p.expiryDate, today()) < 0) ? h('span', { class: 'badge bad' }, 'Ada yang lewat expired') : null,
       ],
       body: (list) => dataTable(columns, list, {
         stack: true,
-        actions: (b) => [
-          b.stockWarehouse > 0 ? h('button', { class: 'btn small', onclick: () => expireWarehouse(b) }, 'Expired') : null,
-          h('button', { class: 'btn small', onclick: () => openBatchForm(b, ctx) }, 'Ubah'),
-          h('button', { class: 'btn small danger', onclick: () => remove(b) }, 'Hapus'),
+        actions: (p) => [
+          p.stockWarehouse > 0 ? h('button', { class: 'btn small', onclick: () => expireWarehouse(p) }, 'Expired') : null,
+          h('button', { class: 'btn small', onclick: () => openProductionForm(p, ctx) }, 'Ubah'),
+          h('button', { class: 'btn small danger', onclick: () => remove(p) }, 'Hapus'),
         ].filter(Boolean),
       }),
     }));
 
-  if (ctx.params && ctx.params.has('add')) { history.replaceState(null, '', `#/${page.id}`); openBatchForm(null, ctx); }
+  if (ctx.params && ctx.params.has('add')) { history.replaceState(null, '', `#/${page.id}`); openProductionForm(null, ctx); }
 }
 
-function showDetail(b) {
-  const rowsItems = (b.items || []).map((i) => ({ name: i.name, qty: `${int(i.qty)} ${i.unit || ''}`.trim(), price: i.price, sub: i.qty * i.price }));
-  const rowsCosts = (b.costs || []).map((c) => ({ name: c.name, qty: '', price: '', sub: c.amount }));
+function showDetail(p) {
+  const rowsItems = p.items.map((i) => ({ name: i.name, qty: `${fmt2(i.qty)} ${i.unit || ''}`.trim(), price: i.price, sub: i.qty * i.price }));
+  const rowsCosts = p.costs.map((c) => ({ name: c.name, qty: '', price: '', sub: c.amount }));
   const cols = [{ key: 'name', label: 'Komponen' }, { key: 'qty', label: 'Jumlah' }, { key: 'price', label: 'Harga satuan', type: 'rp' }, { key: 'sub', label: 'Subtotal', type: 'rp' }];
+  const lotCols = [
+    { key: 'size', label: 'Ukuran', render: (b) => `${b.size} ml` },
+    { key: 'goodBottles', label: 'Botol', type: 'int' },
+    { key: 'totalCost', label: 'Modal', type: 'rp' },
+    { key: 'hpp', label: 'HPP / botol', type: 'rp' },
+    { key: 'stockWarehouse', label: 'Stok gudang', type: 'int' },
+    { key: 'remainingAtPartners', label: 'Di mart', type: 'int' },
+    { key: 'sold', label: 'Terjual', type: 'int' },
+  ];
+  const coco = p.lots[0] && p.lots[0].items[0];
+  const cocoCost = p.lots.reduce((s, b) => s + (b.items[0] ? b.items[0].qty * b.items[0].price : 0), 0);
   openDialog(h('div', { class: 'dialog-body wide' },
-    h('h2', {}, `Rincian ${b.code}`),
+    h('h2', {}, `Rincian ${p.code}`),
     h('div', { class: 'detail-grid' },
-      h('div', {}, h('b', {}, rp(b.totalCost)), h('span', {}, 'Total modal')),
-      h('div', {}, h('b', {}, int(b.goodBottles)), h('span', {}, 'Botol jadi')),
-      h('div', {}, h('b', {}, rp(b.hpp)), h('span', {}, 'HPP per botol')),
-      h('div', {}, h('b', {}, int(b.rejectBottles)), h('span', {}, 'Botol gagal produksi')),
-      h('div', {}, h('b', {}, int(b.sold)), h('span', {}, 'Terjual')),
-      h('div', {}, h('b', {}, rp(b.grossProfit)), h('span', {}, 'Gross profit batch ini')),
-      h('div', {}, h('b', {}, fmtDate(b.date)), h('span', {}, 'Tanggal produksi')),
-      h('div', {}, h('b', {}, fmtDate(b.expiryDate)), h('span', {}, 'Expired')),
-      h('div', {}, h('b', {}, coconutsUsed(b) > 0 ? fmt2(b.goodBottles / coconutsUsed(b)) : '—'), h('span', {}, 'Botol per kelapa'))),
-    dataTable(cols, [...rowsItems, ...rowsCosts], { emptyText: 'Belum ada rincian bahan.' }),
-    h('p', { class: 'muted', style: 'margin-top:12px' }, `HPP = total modal ${rp(b.totalCost)} dibagi ${int(b.goodBottles)} botol jadi. Botol gagal tidak ikut dibagi, jadi biayanya tertanggung di HPP.`),
+      h('div', {}, h('b', {}, fmtDate(p.date)), h('span', {}, 'Tanggal produksi')),
+      h('div', {}, h('b', {}, int(p.coconuts)), h('span', {}, 'Kelapa dipotong')),
+      h('div', {}, h('b', {}, `${fmt2(p.totalLiters)} L`), h('span', {}, 'Total air kelapa')),
+      h('div', {}, h('b', {}, `${fmt2(p.litersPerCoconut)} L`), h('span', {}, 'Liter per kelapa')),
+      h('div', {}, h('b', {}, int(p.qty620)), h('span', {}, 'Botol 620 ml')),
+      h('div', {}, h('b', {}, int(p.qty600)), h('span', {}, 'Botol 600 ml')),
+      h('div', {}, h('b', {}, rp(p.totalCost)), h('span', {}, 'Total modal')),
+      h('div', {}, h('b', {}, fmtDate(p.expiryDate)), h('span', {}, 'Expired'))),
+    h('h3', { style: 'margin:16px 0 8px' }, 'Per ukuran botol'),
+    dataTable(lotCols, p.lots, { stack: true }),
+    h('h3', { style: 'margin:16px 0 8px' }, 'Bahan dan biaya (total produksi)'),
+    dataTable(cols, [
+      ...(coco ? [{ name: coco.name, qty: `${int(p.coconuts)} ${coco.unit || ''}`.trim(), price: p.coconuts > 0 ? cocoCost / p.coconuts : 0, sub: cocoCost }] : []),
+      ...rowsItems, ...rowsCosts,
+    ], { emptyText: 'Belum ada rincian bahan.' }),
+    h('p', { class: 'muted', style: 'margin-top:12px' }, 'Modal dibagi ke botol 620 ml dan 600 ml sesuai total liter masing-masing.'),
     h('div', { class: 'form-actions' }, h('button', { class: 'btn', onclick: closeDialog }, 'Tutup'))));
 }
 
-function openBatchForm(batch, ctx) {
-  const isEdit = !!batch;
-  const defaultPrefix = cleanPrefix(ctx.settings.codePrefix) || 'KLP';
-  const prefixes = [...new Set([defaultPrefix, ...ctx.data.batches.map(prefixOf)].filter(Boolean))];
-  const mainFields = [
-    { key: 'date', label: 'Tanggal produksi', type: 'date', required: true, default: 'today' },
-    { key: 'prefix', label: 'Awalan kode batch', type: 'text', required: true, default: () => ctx.settings.codePrefix || 'KLP', suggest: () => prefixes,
-      help: 'Bawaan KLP. Boleh diganti per produksi, mis. SRS.' },
-    { key: 'goodBottles', label: 'Botol jadi (layak jual)', type: 'int', required: true },
-    { key: 'rejectBottles', label: 'Botol gagal produksi', type: 'int', default: 0 },
-  ];
-  const moreFields = [
-    { key: 'code', label: 'Kode batch (opsional)', type: 'text', help: 'Kosongkan supaya dibuat otomatis dari awalan, tanggal, dan nomor urut.' },
-    { key: 'shelfLifeDays', label: 'Masa simpan (hari)', type: 'int', required: true, default: () => ctx.settings.shelfLifeDays },
-    { key: 'note', label: 'Catatan', type: 'text', full: true },
-  ];
-  const A = buildFields(mainFields, batch ? { ...batch, prefix: prefixOf(batch) } : {}, ctx);
-  const B = buildFields(moreFields, batch || {}, ctx);
-  const inputs = { ...A.inputs, ...B.inputs };
-  const getValues = () => ({ ...A.getValues(), ...B.getValues() });
-  // Kode batch yang akan dipakai, dihitung dengan aturan yang sama seperti di server.
-  const codeEl = h('strong');
-  const wasAuto = isEdit && new RegExp(`^${prefixOf(batch)}-${String(batch.date).replace(/-/g, '')}-\\d+$`).test(batch.code || '');
-  const showCode = () => {
-    const pre = cleanPrefix(inputs.prefix.value) || defaultPrefix;
-    const date = inputs.date.value || today();
-    const typed = inputs.code.value.trim();
-    let code = typed;
-    if (!typed || (isEdit && typed === batch.code && wasAuto && (prefixOf(batch) !== pre || batch.date !== date))) {
-      const head = `${pre}-${date.replace(/-/g, '')}-`;
-      const used = ctx.data.batches.filter((x) => !(isEdit && x.id === batch.id) && String(x.code).startsWith(head)).map((x) => Number(String(x.code).slice(head.length)) || 0);
-      code = head + String(Math.max(0, ...used) + 1).padStart(2, '0');
-    }
-    codeEl.textContent = code;
-  };
-  for (const el of [inputs.prefix, inputs.date, inputs.code]) el.addEventListener('input', showCode);
-  showCode();
-  const top = h('div', {}, A.node, h('p', { class: 'code-preview' }, 'Kode batch: ', codeEl), h('details', { class: 'more' }, h('summary', {}, 'Kode manual, masa simpan, catatan'), B.node));
+function openProductionForm(prod, ctx) {
+  const isEdit = !!prod;
+  const mats = ctx.data.materials || [];
+  const cocoMat = mats.find((m) => /kelapa/i.test(m.name));
+  const others = mats.filter((m) => !cocoMat || m.id !== cocoMat.id);
+  const priceOf = (m) => (m.tracked ? m.avgCost : m.price) || 0;
 
-  // Batch baru: semua bahan langsung muncul sebagai baris, tinggal isi jumlah.
+  // Isian utama: hanya 4 hal.
+  const mk = (id, label, value, ph) => {
+    const el = h('input', { id, type: 'number', min: '0', step: '1', inputmode: 'numeric', placeholder: ph || '0' });
+    el.value = value ?? '';
+    return h('div', { class: 'field' }, h('label', { for: id }, label), el);
+  };
+  const dateEl = h('input', { id: 'p_date', type: 'date', required: true, value: prod ? prod.date : today() });
+  const cocoEl = mk('p_coco', 'Kelapa dipotong (butir)', prod ? prod.coconuts : '', 'mis. 50');
+  const q620El = mk('p_620', 'Total botol 620 ml', prod ? prod.qty620 : '');
+  const q600El = mk('p_600', 'Total botol 600 ml', prod ? prod.qty600 : '');
+  const inp = (w) => w.querySelector('input');
+  const main = h('div', { class: 'fields' },
+    h('div', { class: 'field' }, h('label', { for: 'p_date' }, 'Tanggal produksi'), dateEl), cocoEl, q620El, q600El);
+
+  // Bahan lain: baris untuk tiap bahan selain kelapa. Botol, tutup, label otomatis mengikuti total botol sampai diketik manual.
   const items = isEdit
-    ? batch.items.map((i) => ({ ...i }))
-    : ctx.data.materials.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: m.tracked ? m.avgCost : m.price }));
-  const costs = isEdit ? batch.costs.map((c) => ({ ...c })) : [];
+    ? others.map((m) => {
+      const found = prod.items.find((i) => i.materialId === m.id);
+      return { materialId: m.id, name: m.name, unit: m.unit, qty: found ? found.qty : '', price: found ? found.price : priceOf(m), auto: false, m };
+    })
+    : others.map((m) => ({ materialId: m.id, name: m.name, unit: m.unit, qty: '', price: priceOf(m), auto: AUTO_BY_BOTTLE.test(m.name), m }));
+  const costs = isEdit ? prod.costs.map((c) => ({ ...c })) : [];
 
   const itemsBox = h('div'); const costsBox = h('div');
-  const totalEl = h('strong'); const hppEl = h('strong');
-  const breakdown = h('div', { class: 'breakdown' });
+  const literEl = h('div', { class: 'yield-note' });
+  const costNote = h('div', { class: 'breakdown' });
+  const totalEl = h('strong');
+
+  const vals = () => ({ coco: Number(inp(cocoEl).value) || 0, q620: Number(inp(q620El).value) || 0, q600: Number(inp(q600El).value) || 0 });
+  const cocoPrice = () => (cocoMat ? priceOf(cocoMat) : 0);
 
   const update = () => {
-    const total = items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.price) || 0), 0)
-      + costs.reduce((s, c) => s + (Number(c.amount) || 0), 0);
-    const good = Number(inputs.goodBottles.value) || 0;
+    const { coco, q620, q600 } = vals();
+    const totalBottles = q620 + q600;
+    for (const r of items) if (r.auto) { r.qty = totalBottles > 0 ? totalBottles : ''; if (r.input) r.input.value = r.qty; }
+    const L = liters(q620, q600);
+    setChildren(literEl,
+      L > 0 && coco > 0
+        ? [h('b', {}, `Total air kelapa: ${fmt2(L)} liter`), ` · ${fmt2(L / coco)} liter per kelapa · ${fmt2(totalBottles / coco)} botol per kelapa`]
+        : h('span', { class: 'muted' }, 'Isi kelapa dan jumlah botol untuk melihat total liter.'));
+    const itemsTotal = items.reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.price) || 0), 0);
+    const costsTotal = costs.reduce((s, c) => s + (Number(c.amount) || 0), 0);
+    const total = coco * cocoPrice() + itemsTotal + costsTotal;
     totalEl.textContent = rp(total);
-    hppEl.textContent = good > 0 ? rp(total / good) : '—';
-    // Rincian: tiap bahan = jumlah x harga, lalu dibagi botol jadi
-    const rows = items.filter((i) => Number(i.qty) > 0).map((i) => {
-      const sub = (Number(i.qty) || 0) * (Number(i.price) || 0);
-      return h('div', { class: 'kv' }, h('span', {}, `${i.name}: ${Number(i.qty)} × ${rp(Number(i.price) || 0)} = ${rp(sub)}`), h('span', {}, good > 0 ? `${rp(sub / good)} / botol` : ''));
-    });
-    const other = costs.reduce((s, c) => s + (Number(c.amount) || 0), 0);
-    if (other > 0) rows.push(h('div', { class: 'kv' }, h('span', {}, 'Biaya lain'), h('span', {}, good > 0 ? `${rp(other / good)} / botol` : rp(other))));
-    setChildren(breakdown, ...(rows.length ? [h('h3', {}, good > 0 ? `Biaya per botol (dibagi ${int(good)} botol jadi)` : 'Isi botol jadi untuk melihat biaya per botol'), ...rows] : []));
+    const rows = [];
+    if (L > 0) {
+      for (const z of SIZES) {
+        const q = z === '620' ? q620 : q600;
+        if (q > 0) rows.push(h('div', { class: 'kv' }, h('span', {}, `HPP botol ${z} ml (${int(q)} botol)`), h('span', {}, rp((total * ((q * LITER[z]) / L)) / q))));
+      }
+    }
+    setChildren(costNote, rows);
   };
-  inputs.goodBottles.addEventListener('input', update);
+  for (const w of [cocoEl, q620El, q600El]) inp(w).addEventListener('input', update);
 
   const numInput = (value, onInput, ph) => {
     const el = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', placeholder: ph });
@@ -183,34 +209,17 @@ function openBatchForm(batch, ctx) {
 
   function drawItems() {
     setChildren(itemsBox, h('div', { class: 'line head' }, h('span', {}, 'Bahan'), h('span', {}, 'Jumlah'), h('span', {}, 'Harga satuan'), h('span', { style: 'text-align:right' }, 'Subtotal'), h('span')));
-    items.forEach((row, idx) => {
-      const sel = h('select', { 'aria-label': 'Bahan' });
-      for (const m of ctx.data.materials) sel.append(h('option', { value: m.id }, m.name));
-      if (!ctx.data.materials.some((m) => m.id === row.materialId)) sel.append(h('option', { value: row.materialId }, `${row.name} (dihapus)`));
-      sel.value = row.materialId;
+    items.forEach((row) => {
       const sub = h('span', { class: 'sub' });
-      const refreshSub = () => { sub.textContent = rp((Number(row.qty) || 0) * (Number(row.price) || 0)); update(); };
-      const mat = () => ctx.data.materials.find((x) => x.id === row.materialId);
-      const price = numInput(row.price, (v) => { row.price = v; refreshSub(); }, 'Harga');
-      // Bahan yang belanjanya sudah dicatat memakai harga rata-rata stok, tidak perlu diketik.
-      const syncTracked = () => {
-        const m = mat();
-        price.disabled = !!(m && m.tracked);
-        price.title = price.disabled ? 'Otomatis dari harga rata-rata stok' : '';
-        if (m && m.tracked) { row.price = m.avgCost; price.value = m.avgCost; }
-      };
-      sel.addEventListener('change', () => {
-        const m = ctx.data.materials.find((x) => x.id === sel.value);
-        if (m) { Object.assign(row, { materialId: m.id, name: m.name, unit: m.unit, price: m.tracked ? m.avgCost : m.price }); price.value = row.price; syncTracked(); refreshSub(); }
-      });
-      syncTracked();
+      const refreshSub = () => { sub.textContent = rp((Number(row.qty) || 0) * (Number(row.price) || 0)); };
+      const price = numInput(row.price, (v) => { row.price = v; refreshSub(); update(); }, 'Harga');
+      if (row.m && row.m.tracked) { price.disabled = true; price.title = 'Otomatis dari harga rata-rata stok'; }
+      const qty = numInput(row.qty, (v) => { row.qty = v; row.auto = false; refreshSub(); update(); }, row.m && row.m.tracked ? `stok ${row.m.stockQty}` : row.unit || 'Jumlah');
+      row.input = qty;
       refreshSub();
-      const qtyEl = numInput(row.qty, (v) => { row.qty = v; refreshSub(); }, mat() && mat().tracked ? `stok ${mat().stockQty}` : (row.unit || 'Jumlah'));
-      itemsBox.append(h('div', { class: 'line' }, sel, qtyEl, price, sub,
-        h('button', { type: 'button', class: 'btn small', 'aria-label': 'Hapus baris', onclick: () => { items.splice(idx, 1); drawItems(); } }, '✕')));
+      itemsBox.append(h('div', { class: 'line' }, h('span', {}, row.name), qty, price, sub, h('span')));
     });
   }
-
   function drawCosts() {
     costsBox.replaceChildren();
     costs.forEach((row, idx) => {
@@ -220,30 +229,37 @@ function openBatchForm(batch, ctx) {
         h('button', { type: 'button', class: 'btn small', 'aria-label': 'Hapus baris', onclick: () => { costs.splice(idx, 1); drawCosts(); update(); } }, '✕')));
     });
   }
-
   drawItems(); drawCosts(); update();
 
+  const noteEl = h('input', { type: 'text', placeholder: 'Catatan (opsional)' });
+  noteEl.value = prod ? prod.note || '' : '';
+
   const content = h('div', {},
-    top,
-    h('div', { class: 'lines' }, h('h3', {}, 'Bahan yang dipakai'), h('p', { class: 'muted', style: 'margin:-4px 0 8px' }, 'Isi jumlah yang benar-benar terpakai. Biaya per botol = jumlah × harga per pcs ÷ botol jadi.'), itemsBox,
-      h('button', { type: 'button', class: 'btn small', onclick: () => { const m = ctx.data.materials[0]; items.push({ materialId: m ? m.id : '', name: m ? m.name : '', unit: m ? m.unit : '', qty: '', price: m ? (m.tracked ? m.avgCost : m.price) : 0 }); drawItems(); } }, 'Tambah bahan')),
-    h('div', { class: 'lines' }, h('h3', {}, 'Biaya lain (tenaga kerja, gas, ongkir, dll)'), costsBox,
-      h('datalist', { id: 'dl_costs' }, COST_SUGGESTIONS.map((s) => h('option', { value: s }))),
-      h('button', { type: 'button', class: 'btn small', onclick: () => { costs.push({ name: '', amount: '' }); drawCosts(); } }, 'Tambah biaya')),
-    breakdown,
-    h('div', { class: 'preview' }, h('span', {}, 'Total modal: ', totalEl), h('span', {}, 'HPP per botol: ', hppEl)));
+    main, literEl,
+    h('details', { class: 'more', open: isEdit && (prod.items.length > 0 || prod.costs.length > 0) },
+      h('summary', {}, 'Botol, tutup, label, dan biaya lain (otomatis, bisa diubah)'),
+      h('div', { class: 'lines' },
+        h('p', { class: 'muted', style: 'margin:4px 0 8px' }, 'Botol, tutup, dan label otomatis sama dengan total botol. Ubah kalau berbeda. Kelapa sudah dihitung dari jumlah yang dipotong.'),
+        itemsBox),
+      h('div', { class: 'lines' }, h('h3', {}, 'Biaya lain (tenaga kerja, gas, dll)'), costsBox,
+        h('datalist', { id: 'dl_costs' }, COST_SUGGESTIONS.map((s) => h('option', { value: s }))),
+        h('button', { type: 'button', class: 'btn small', onclick: () => { costs.push({ name: '', amount: '' }); drawCosts(); } }, 'Tambah biaya')),
+      h('div', { class: 'field full', style: 'margin-top:12px' }, h('label', {}, 'Catatan'), noteEl)),
+    costNote,
+    h('div', { class: 'preview' }, h('span', {}, 'Total modal: ', totalEl)));
 
   formShell({
-    title: isEdit ? `Ubah batch ${batch.code}` : 'Tambah batch produksi', wide: true, children: content,
+    title: isEdit ? `Ubah produksi ${prod.code}` : 'Catat produksi', wide: true, children: content,
     onSubmit: async () => {
+      const { coco, q620, q600 } = vals();
       const body = {
-        ...getValues(),
+        date: dateEl.value, coconuts: coco, qty620: q620, qty600: q600, note: noteEl.value,
         items: items.filter((i) => Number(i.qty) > 0).map((i) => ({ materialId: i.materialId, name: i.name, unit: i.unit, qty: Number(i.qty), price: Number(i.price) || 0 })),
         costs: costs.filter((c) => c.name && Number(c.amount) > 0).map((c) => ({ name: c.name, amount: Number(c.amount) })),
       };
-      await api(isEdit ? `/batches/${batch.id}` : '/batches', { method: isEdit ? 'PUT' : 'POST', body });
+      await api(isEdit ? `/productions/${prod.id}` : '/productions', { method: isEdit ? 'PUT' : 'POST', body });
       openDays.add(body.date);
-      toast(isEdit ? 'Batch diperbarui' : 'Batch ditambahkan');
+      toast(isEdit ? 'Produksi diperbarui' : 'Produksi dicatat');
       await ctx.refresh();
     },
   });
