@@ -137,7 +137,7 @@ const ALL = [
     columns: [
       { key: 'name', label: 'Mitra' },
       { key: 'type', label: 'Tipe' },
-      { key: 'scheme', label: 'Skema', render: (r) => (r.scheme === 'putus' ? 'Beli putus' : 'Titip jual') },
+      { key: 'scheme', label: 'Skema', render: (r) => ({ putus: 'Beli putus', langsung: 'Langsung' }[r.scheme] || 'Titip jual') },
       { key: 'price', label: 'Harga jual', type: 'rp' },
       { key: 'remaining', label: 'Botol di mitra', type: 'int' },
       { key: 'contact', label: 'Kontak' },
@@ -145,7 +145,7 @@ const ALL = [
     fields: [
       { key: 'name', label: 'Nama mitra', type: 'text', required: true },
       { key: 'type', label: 'Tipe', type: 'text', suggest: (d, s) => csv(s.partnerTypes) },
-      { key: 'scheme', label: 'Skema', type: 'select', required: true, default: 'titip', options: [{ value: 'titip', label: 'Titip jual' }, { value: 'putus', label: 'Beli putus' }] },
+      { key: 'scheme', label: 'Skema', type: 'select', required: true, default: 'titip', options: [{ value: 'titip', label: 'Titip jual' }, { value: 'putus', label: 'Beli putus' }, { value: 'langsung', label: 'Langsung' }], help: 'Beli putus dan Langsung: botol yang dikirim otomatis dihitung terjual. Titip jual: hasil nota dicatat belakangan.' },
       { key: 'price', label: 'Harga jual default per botol (Rp)', type: 'money', default: 0 },
       { key: 'contact', label: 'Kontak', type: 'text' },
       { key: 'address', label: 'Alamat', type: 'text', full: true },

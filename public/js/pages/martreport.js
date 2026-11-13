@@ -14,7 +14,7 @@ const KIND = {
   'retur-rusak': () => badge('Retur rusak', 'bad'),
   expired: () => badge('Expired', 'bad'),
 };
-const SCHEME = { titip: 'Titip', putus: 'Putus' };
+const SCHEME = { titip: 'Titip', putus: 'Putus', langsung: 'Langsung' };
 
 export async function renderMartReport(root, page, ctx) {
   const id = ctx.params.get('id') || '';
