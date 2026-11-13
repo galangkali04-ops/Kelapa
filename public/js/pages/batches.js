@@ -24,6 +24,8 @@ const stat = (value, label) => h('div', { class: 'stat' }, h('div', { class: 'v'
 export function renderBatches(root, page, ctx) {
   const prods = ctx.data.productions || [];
   const batches = ctx.data.batches || [];
+  // Total botol yang keluar (dikirim ke mart) pada satu tanggal.
+  const outOn = (date) => (ctx.data.deliveries || []).filter((d) => d.date === date).reduce((n, d) => n + (Number(d.qty) || 0), 0);
   const stock = (z) => batches.filter((b) => (b.size || '600') === z).reduce((s, b) => s + Math.max(0, b.stockWarehouse), 0);
 
   const columns = [
@@ -86,6 +88,7 @@ export function renderBatches(root, page, ctx) {
         `${int(list.reduce((n, p) => n + p.coconuts, 0))} kelapa`,
         h('b', {}, `${fmt2(list.reduce((n, p) => n + p.totalLiters, 0))} liter`),
         `${int(list.reduce((n, p) => n + p.totalBottles, 0))} botol`,
+        h('b', {}, `Keluar ${int(outOn(date))} botol`),
         `Modal ${rp(list.reduce((n, p) => n + p.totalCost, 0))}`,
         list.some((p) => p.stockTotal > 0 && daysBetween(p.expiryDate, today()) < 0) ? h('span', { class: 'badge bad' }, 'Ada yang lewat expired') : null,
       ],
@@ -171,6 +174,15 @@ function openProductionForm(prod, ctx) {
 
   const itemsBox = h('div'); const costsBox = h('div');
   const literEl = h('div', { class: 'yield-note' });
+  const outEl = h('p', { class: 'yield-note', style: 'margin-top:10px' });
+  const showOut = () => {
+    const rows = (ctx.data.deliveries || []).filter((d) => d.date === dateEl.value);
+    const by = (z) => rows.filter((d) => (d.size || '600') === z).reduce((n, d) => n + (Number(d.qty) || 0), 0);
+    const total = rows.reduce((n, d) => n + (Number(d.qty) || 0), 0);
+    setChildren(outEl, h('b', {}, `Botol keluar pada ${fmtDate(dateEl.value)}: ${int(total)} botol`), total > 0 ? ` (620 ml: ${int(by('620'))} · 600 ml: ${int(by('600'))})` : ' · belum ada pengiriman ke mart');
+  };
+  dateEl.addEventListener('change', showOut);
+  showOut();
   const costNote = h('div', { class: 'breakdown' });
   const totalEl = h('strong');
 
@@ -234,7 +246,7 @@ function openProductionForm(prod, ctx) {
   noteEl.value = prod ? prod.note || '' : '';
 
   const content = h('div', {},
-    main, literEl,
+    main, outEl, literEl,
     h('details', { class: 'more', open: isEdit && (prod.items.length > 0 || prod.costs.length > 0) },
       h('summary', {}, 'Bahan tambahan dan biaya lain (opsional)'),
       h('div', { class: 'lines' },

@@ -4,6 +4,15 @@ import { api, logout } from '../api.js';
 import { passwordField } from '../password-field.js';
 import { deviceSupport, requestDevicePermission, sendTestNotification, clearNotificationHistory } from '../notify.js';
 
+function themePicker() {
+  const T = window.DewaTheme;
+  const box = h('div', { class: 'theme-pick', role: 'group', 'aria-label': 'Mode tampilan' });
+  const draw = () => setChildren(box, [['shift', 'Shift'], ['dark', 'Dark'], ['bright', 'Bright']].map(([v, l]) =>
+    h('button', { type: 'button', 'aria-pressed': String(T.get() === v), onclick: () => { T.set(v); draw(); } }, l)));
+  draw();
+  return box;
+}
+
 export function renderSettings(root, page, ctx) {
   const { node, getValues } = buildFields(page.fields, ctx.settings, ctx);
   const save = h('button', { class: 'btn primary', type: 'submit' }, 'Simpan pengaturan');
@@ -95,6 +104,9 @@ export function renderSettings(root, page, ctx) {
   setChildren(root, 
     pageHeader('Pengaturan'),
     h('div', { class: 'panel' }, form,
+      h('div', { class: 'settings-block' }, h('h2', {}, 'Tampilan'),
+        h('p', {}, 'Shift berganti otomatis: terang pukul 06.00 sampai 18.00, gelap di luar jam itu. Pilihan ini berlaku di perangkat ini saja.'),
+        themePicker()),
       h('div', { class: 'settings-block' }, h('h2', {}, 'Keamanan'),
         h('p', {}, 'Aplikasi terkunci dengan sandi. Dengan "Ingat saya 30 hari", perangkat tidak perlu memasukkan sandi lagi selama 30 hari.'),
         h('div', { class: 'row-actions' },

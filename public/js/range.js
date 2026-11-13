@@ -8,7 +8,6 @@ const iso = (d) => d.toLocaleDateString('sv-SE');
 export function presetDates(p = range.preset) {
   const now = new Date();
   if (p === 'today') return { from: iso(now), to: iso(now) };
-  if (p === 'yesterday') { const y = new Date(now); y.setDate(y.getDate() - 1); return { from: iso(y), to: iso(y) }; }
   if (p === '7d') { const s = new Date(now); s.setDate(s.getDate() - 6); return { from: iso(s), to: iso(now) }; }
   if (p === 'month') return { from: iso(new Date(now.getFullYear(), now.getMonth(), 1)), to: iso(now) };
   if (p === 'custom') return { from: range.from, to: range.to };
@@ -27,7 +26,7 @@ export function rangeQuery() {
 // Kotak pilihan periode. `again` dipanggil setiap pilihan berubah.
 export function rangeFilters(again) {
   const preset = h('select', { id: 'preset', onchange: (e) => { range.preset = e.target.value; again(); } },
-    [['today', 'Hari ini'], ['yesterday', 'Kemarin'], ['7d', '7 hari terakhir'], ['month', 'Bulan ini'], ['all', 'Semua waktu'], ['custom', 'Atur tanggal']].map(([v, l]) => h('option', { value: v }, l)));
+    [['today', 'Hari ini'], ['7d', '7 hari terakhir'], ['month', 'Bulan ini'], ['all', 'Semua waktu'], ['custom', 'Atur tanggal']].map(([v, l]) => h('option', { value: v }, l)));
   preset.value = range.preset;
   const dateInput = (key, label) => {
     const el = h('input', { type: 'date', value: range[key], 'aria-label': label });
@@ -40,7 +39,9 @@ export function rangeFilters(again) {
 }
 
 // Tombol unduh PDF. `path` mis. '/report/pdf'. Periode yang sedang dipilih ikut terkirim.
-export function pdfButton(path, label = 'Unduh PDF', primary = false) {
-  const qs = rangeQuery();
-  return h('a', { class: primary ? 'btn primary' : 'btn', href: `/api${path}${qs ? `?${qs}` : ''}`, download: '', target: '_blank', rel: 'noopener' }, label);
+export function pdfButton(path, label = 'Unduh PDF', extra = {}) {
+  const qs = new URLSearchParams(rangeQuery());
+  for (const [k, v] of Object.entries(extra)) qs.set(k, v);
+  const q = qs.toString();
+  return h('a', { class: 'btn', href: `/api${path}${q ? `?${q}` : ''}`, download: '', target: '_blank', rel: 'noopener' }, label);
 }

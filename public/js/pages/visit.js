@@ -1,12 +1,11 @@
-// Mart: pilih mart, lalu klik "Tambah pengiriman" (botol 620 ml dan 600 ml diambil dari stok gudang).
-// Mart titip jual punya tombol "Catat hasil nota". Beli putus dan langsung: botol yang dikirim otomatis terjual.
-// Ada unduh PDF (tagihan mart dan laporan owner), HPP per botol, rincian bahan, dan riwayat pengiriman.
-import { h, rp, int, fmtDate, today, pageHeader, openDialog, closeDialog, formShell, toast, dataTable, setChildren, confirmBox } from '../ui.js';
+// Mart: pilih mart, lalu klik "Tambah pengiriman" (botol 620 ml dan 600 ml diambil dari stok gudang)
+// atau "Catat hasil nota" (laku, kembali, expired). Di bawahnya ada riwayat untuk koreksi.
+import { h, rp, int, fmtDate, today, pageHeader, openDialog, closeDialog, formShell, toast, dataTable, setChildren } from '../ui.js';
 import { api } from '../api.js';
 import { DEF } from '../config.js';
 import { removeRow } from '../crudkit.js';
 import { openPartnerForm } from './partnerform.js';
-import { rangeFilters, pdfButton } from '../range.js';
+import { rangeFilters, presetDates } from '../range.js';
 
 const SIZES = ['620', '600'];
 const badge = (text, cls = '') => h('span', { class: `badge ${cls}` }, text);
@@ -18,35 +17,30 @@ const numInput = (onInput, placeholder = '0') => {
 };
 const sizeOf = (x) => x.size || '600';
 
-const SCHEME = { titip: 'Titip jual', putus: 'Beli putus', langsung: 'Langsung' };
-const isTitip = (p) => (p.scheme || 'titip') === 'titip';
-
-// Riwayat pengiriman saja. Satu baris = satu kali kirim (620 dan 600 digabung).
-function deliveryRows(ctx, partnerId) {
-  const groups = new Map();
-  for (const d of ctx.data.deliveries) {
-    if (partnerId && d.partnerId !== partnerId) continue;
-    const key = `${d.partnerId}|${d.createdAt || d.id}`;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key).push(d);
-  }
-  return [...groups.values()].map((list) => {
-    const ids = new Set(list.map((d) => d.id));
-    const sales = ctx.data.sales.filter((s) => ids.has(s.deliveryId));
-    const per = (z) => list.filter((d) => sizeOf(d) === z).reduce((n, d) => n + d.qty, 0);
-    return {
-      key: list[0].id, ids: [...ids], date: list[0].date, createdAt: list[0].createdAt || '', partnerName: list[0].partnerName,
-      q620: per('620'), q600: per('600'),
-      value: list.reduce((n, d) => n + d.qty * d.price, 0),
-      remaining: list.reduce((n, d) => n + d.remaining, 0),
-      hasSales: sales.length > 0, unpaid: sales.some((x) => !x.paid),
-    };
-  }).sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt)).slice(0, 30);
+// Semua pergerakan botol mart (kirim, laku, kembali, expired), terbaru dulu.
+function historyRows(ctx, partnerId) {
+  const d = ctx.data;
+  const sz = (x) => {
+    const del = x.deliveryId ? d.deliveries.find((q) => q.id === x.deliveryId) : null;
+    const b = d.batches.find((q) => q.id === x.batchId);
+    return `${(del && sizeOf(del)) || (b && sizeOf(b)) || sizeOf(x)} ml`;
+  };
+  const rows = [
+    ...d.deliveries.map((x) => ({ col: 'deliveries', x, kind: 'Kirim', cls: '', text: `${int(x.qty)} botol ${sizeOf(x)} ml @ ${rp(x.price)}`, amount: null })),
+    ...d.sales.map((x) => ({ col: 'sales', x, kind: 'Laku', cls: 'ok', text: `${int(x.qty)} botol ${sz(x)}${x.paid ? '' : ' · belum dibayar'}`, amount: x.total })),
+    ...d.returns.map((x) => ({ col: 'returns', x, kind: 'Kembali', cls: 'warn', text: `${int(x.qty)} botol ${sz(x)} (${x.condition})`, amount: null })),
+    ...d.expirations.map((x) => ({ col: 'expirations', x, kind: 'Expired', cls: 'bad', text: `${int(x.qty)} botol ${sz(x)}`, amount: null })),
+  ];
+  return rows
+    .filter((r) => !partnerId || r.x.partnerId === partnerId)
+    .map((r) => ({ ...r, date: r.x.date, partnerName: r.x.partnerName, batchCode: r.x.batchCode }))
+    .sort((a, b) => b.date.localeCompare(a.date) || (b.x.createdAt || '').localeCompare(a.x.createdAt || ''))
+    .slice(0, 40);
 }
 
 export function renderVisit(root, page, ctx) {
   const partners = ctx.data.partners;
-  const state = { partnerId: (ctx.params && ctx.params.get('partner')) || '' };
+  const state = { partnerId: (ctx.params && ctx.params.get('partner')) || '', size: 'all' };
   if (!partners.some((p) => p.id === state.partnerId)) state.partnerId = '';
 
   const body = h('div');
@@ -79,62 +73,36 @@ export function renderVisit(root, page, ctx) {
     .sort((a, b) => a.date.localeCompare(b.date) || (a.createdAt || '').localeCompare(b.createdAt || ''));
 
   function historySection(partnerId) {
-    const sizes = (r) => [r.q620 ? `620 ml × ${int(r.q620)}` : '', r.q600 ? `600 ml × ${int(r.q600)}` : ''].filter(Boolean).join(' · ');
     const cols = [
       { key: 'date', label: 'Tanggal', type: 'date' },
       ...(partnerId ? [] : [{ key: 'partnerName', label: 'Mart' }]),
-      { key: 'sizes', label: 'Pengiriman', render: sizes },
-      { key: 'value', label: 'Nilai', type: 'rp' },
-      { key: 'status', label: 'Status', render: (r) => {
-        const p = partners.find((x) => x.name === r.partnerName);
-        if (r.hasSales && p && !isTitip(p)) return badge(r.unpaid ? 'Belum dibayar' : 'Lunas', r.unpaid ? 'warn' : 'ok');
-        return r.remaining > 0 ? `Sisa ${int(r.remaining)} di mart` : 'Habis';
-      } },
+      { key: 'kind', label: 'Jenis', render: (r) => badge(r.kind, r.cls) },
+      { key: 'text', label: 'Rincian' },
+      { key: 'batchCode', label: 'Produksi' },
+      { key: 'amount', label: 'Rp', render: (r) => (r.amount == null ? '' : rp(r.amount)) },
     ];
     return h('section', { class: 'panel flush' },
-      h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Riwayat pengiriman'), h('p', { class: 'muted' }, 'Salah kirim? Hapus barisnya lalu catat ulang.')),
-      dataTable(cols, deliveryRows(ctx, partnerId), {
-        stack: true, emptyText: 'Belum ada pengiriman.',
-        actions: (r) => [h('button', { class: 'btn small danger', onclick: () => removeDelivery(r) }, 'Hapus')],
+      h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Riwayat'), h('p', { class: 'muted' }, 'Salah catat? Hapus barisnya lalu catat ulang.')),
+      dataTable(cols, historyRows(ctx, partnerId), {
+        stack: true, emptyText: 'Belum ada catatan.',
+        actions: (r) => [
+          r.col === 'sales' && !r.x.paid ? h('button', { class: 'btn small primary', onclick: () => markPaid(r.x) }, 'Tandai lunas') : null,
+          h('button', { class: 'btn small danger', onclick: () => removeRow(DEF[r.col], r.x, ctx, `catatan ${r.kind.toLowerCase()}`) }, 'Hapus'),
+        ].filter(Boolean),
       }));
   }
 
-  async function removeDelivery(r) {
-    if (!(await confirmBox(`Hapus pengiriman tanggal ${fmtDate(r.date)}?`))) return;
+  async function markPaid(sale) {
     try {
-      for (const id of r.ids) await api(`/deliveries/${id}`, { method: 'DELETE' });
-      toast('Pengiriman dihapus');
-    } catch (e) { toast(e.message, 'error'); }
-    await ctx.refresh();
-  }
-
-  async function markAllPaid(partner) {
-    try {
-      await api(`/partners/${partner.id}/paid`, { method: 'POST', body: {} });
-      toast('Semua tagihan ditandai lunas');
+      await api(`/sales/${sale.id}`, { method: 'PUT', body: { date: sale.date, deliveryId: sale.deliveryId, qty: sale.qty, price: sale.price, paid: true, note: sale.note || '' } });
+      toast('Ditandai lunas');
       await ctx.refresh();
     } catch (e) { toast(e.message, 'error'); }
   }
 
-  // Unduh PDF: pilih periode (hari ini, kemarin, 7 hari, bulan ini, atau atur tanggal), lalu pilih jenis PDF.
-  function pdfSection(partner) {
-    const box = h('div');
-    const id = encodeURIComponent(partner.id);
-    const draw = () => setChildren(box,
-      rangeFilters(draw),
-      h('div', { class: 'form-actions', style: 'justify-content:flex-start' },
-        pdfButton(`/report/mart/${id}/bill/pdf`, 'PDF tagihan mart', true),
-        pdfButton(`/report/mart/${id}/pdf`, 'PDF laporan owner')));
-    draw();
-    return h('section', { class: 'panel' }, h('h2', {}, 'Unduh PDF'),
-      h('p', { class: 'muted', style: 'margin:4px 0 12px' }, 'Tagihan mart: botol terjual per hari dan total yang harus dibayar (tanpa HPP). Laporan owner: lengkap dengan HPP dan laba.'),
-      box);
-  }
-
   // ---------- Tambah pengiriman ----------
   function openDelivery(partner) {
-    const st = { date: today(), qty: { 620: 0, 600: 0 }, price: {}, paid: true };
-    const direct = !isTitip(partner); // beli putus / langsung: langsung terjual
+    const st = { date: today(), qty: { 620: 0, 600: 0 }, price: {} };
     for (const z of SIZES) {
       const last = ctx.data.deliveries.filter((d) => d.partnerId === partner.id && sizeOf(d) === z).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))[0];
       st.price[z] = (last && last.price) || partner.price || '';
@@ -147,32 +115,26 @@ export function renderVisit(root, page, ctx) {
     const refresh = () => {
       const total = SIZES.reduce((s, z) => s + st.qty[z], 0);
       const value = SIZES.reduce((s, z) => s + st.qty[z] * (Number(st.price[z]) || 0), 0);
-      warn.textContent = SIZES.filter((z) => st.qty[z] > warehouse(z)).map((z) => `Stok gudang ${z} ml hanya ${int(warehouse(z))} botol.`).join(' ');
+      warn.textContent = SIZES.filter((z) => st.qty[z] > warehouse(z)).map((z) => `Stok botol ${z} ml tidak cukup untuk jumlah ini.`).join(' ');
       setChildren(summary,
-        h('div', { class: 'kv total' }, h('span', {}, direct ? 'Total dikirim (langsung terjual)' : 'Total dikirim'), h('span', {}, `${int(total)} botol`)),
+        h('div', { class: 'kv total' }, h('span', {}, 'Total dikirim'), h('span', {}, `${int(total)} botol`)),
         h('div', { class: 'kv' }, h('span', {}, 'Nilai pengiriman'), h('span', {}, rp(value))),
-        ...(direct ? [] : [h('div', { class: 'kv' }, h('span', {}, `Botol di ${partner.name} setelah ini`), h('span', {}, `${int(totalOpen + total)} botol`))]),
-        ...SIZES.map((z) => h('div', { class: 'kv' }, h('span', {}, `Sisa stok gudang ${z} ml`), h('span', {}, `${int(Math.max(0, warehouse(z) - st.qty[z]))} botol`))),
+        h('div', { class: 'kv' }, h('span', {}, `Botol di ${partner.name} setelah ini`), h('span', {}, `${int(totalOpen + total)} botol`)),
         ...SIZES.filter((z) => st.qty[z] > 0).map((z) => h('div', { class: 'kv' }, h('span', {}, `HPP botol ${z} ml (air ${rp(waterHpp(z))} + kemasan ${rp(packOfPartner(partner, z))})`), h('span', {}, rp(waterHpp(z) + packOfPartner(partner, z))))));
     };
-    const paidBox = h('input', { type: 'checkbox', checked: true });
-    paidBox.addEventListener('change', () => { st.paid = paidBox.checked; });
     const rows = SIZES.map((z) => {
       const qty = numInput((v) => { st.qty[z] = v; refresh(); });
       const price = h('input', { type: 'number', min: '0', step: 'any', inputmode: 'decimal', value: st.price[z] });
       price.addEventListener('input', () => { st.price[z] = price.value; refresh(); });
       return h('div', { class: 'fields', style: 'margin-top:10px' },
-        field(`Botol ${z} ml · stok gudang ${int(warehouse(z))}`, qty), field(`Harga per botol ${z} ml (Rp)`, price));
+        field(`Botol ${z} ml`, qty), field(`Harga per botol ${z} ml (Rp)`, price));
     });
     formShell({
       title: `Tambah pengiriman · ${partner.name}`, submitLabel: 'Kirim',
-      children: h('div', {},
-        h('div', { class: 'fields' }, field('Tanggal kirim', dateEl),
-          direct ? h('div', { class: 'field check full' }, h('label', {}, 'Mart sudah bayar'), paidBox) : null),
-        ...rows, summary, warn),
+      children: h('div', {}, h('div', { class: 'fields' }, field('Tanggal kirim', dateEl)), ...rows, summary, warn),
       onSubmit: async () => {
         if (SIZES.every((z) => st.qty[z] === 0)) throw new Error('Isi jumlah botol yang dikirim.');
-        const res = await api('/visits', { method: 'POST', body: { partnerId: partner.id, date: st.date, newQty: st.qty, newPrice: st.price, paid: st.paid } });
+        const res = await api('/visits', { method: 'POST', body: { partnerId: partner.id, date: st.date, newQty: st.qty, newPrice: st.price } });
         await ctx.refresh();
         setTimeout(() => showResult(partner, res), 0); // setelah form tertutup
       },
@@ -231,6 +193,42 @@ export function renderVisit(root, page, ctx) {
     refresh();
   }
 
+  // ---------- Ringkasan: total dikirim (mart + ukuran) dan terjual (sesuai periode) ----------
+  const sizeText = () => (state.size === 'all' ? 'semua ukuran' : `${state.size} ml`);
+  const periodText = () => {
+    const { from, to } = presetDates();
+    if (!from && !to) return 'semua waktu';
+    if (from && to) return from === to ? fmtDate(from) : `${fmtDate(from)} s/d ${fmtDate(to)}`;
+    return from ? `mulai ${fmtDate(from)}` : `sampai ${fmtDate(to)}`;
+  };
+  function summaryPanel(partner) {
+    const { from, to } = presetDates();
+    const inR = (d) => (!from || d >= from) && (!to || d <= to);
+    const okSize = (z) => state.size === 'all' || z === state.size;
+    const dels = ctx.data.deliveries.filter((d) => d.partnerId === partner.id && okSize(sizeOf(d)));
+    const delById = new Map(ctx.data.deliveries.map((d) => [d.id, d]));
+    const sold = ctx.data.sales.filter((s) => {
+      const d = delById.get(s.deliveryId);
+      return s.partnerId === partner.id && d && okSize(sizeOf(d)) && inR(s.date);
+    });
+    const totalSent = dels.reduce((n, d) => n + (Number(d.qty) || 0), 0);
+    const totalSold = sold.reduce((n, s) => n + (Number(s.qty) || 0), 0);
+
+    const sizeSel = h('select', { id: 'sizePick', 'aria-label': 'Ukuran botol' },
+      [['all', 'Semua ukuran'], ...SIZES.map((z) => [z, `${z} ml`])].map(([v, l]) => h('option', { value: v }, l)));
+    sizeSel.value = state.size;
+    sizeSel.addEventListener('change', () => { state.size = sizeSel.value; draw(); });
+
+    return h('section', { class: 'panel' },
+      h('h2', {}, 'Pengiriman dan penjualan'),
+      h('div', { class: 'filters', style: 'margin:12px 0' },
+        h('div', { class: 'field' }, h('label', { for: 'sizePick' }, 'Ukuran botol'), sizeSel),
+        ...[...rangeFilters(draw).children]),
+      h('div', { class: 'stats', style: 'margin:12px 0' },
+        h('div', { class: 'stat' }, h('div', { class: 'v' }, `${int(totalSent)} botol`), h('div', { class: 'l' }, `Total dikirim ke ${partner.name} · ${sizeText()} · semua waktu`)),
+        h('div', { class: 'stat' }, h('div', { class: 'v' }, `${int(totalSold)} botol`), h('div', { class: 'l' }, `Terjual · ${sizeText()} · ${periodText()}`))));
+  }
+
   function draw() {
     const partner = partners.find((p) => p.id === state.partnerId);
     if (!partner) {
@@ -245,10 +243,6 @@ export function renderVisit(root, page, ctx) {
     }
     const open = openOf(partner);
     const atMart = (z) => open.filter((d) => sizeOf(d) === z).reduce((s, d) => s + d.remaining, 0);
-    const openTotal = open.reduce((n, d) => n + d.remaining, 0);
-    const titip = isTitip(partner);
-    const unpaid = ctx.data.sales.filter((x) => x.partnerId === partner.id && !x.paid).reduce((n, x) => n + x.total, 0);
-    const info = [partner.type, SCHEME[partner.scheme || 'titip'], partner.address, partner.contact].filter(Boolean).join(' · ');
     setChildren(body,
       h('div', { class: 'row-actions', style: 'margin-bottom:12px' },
         h('button', { class: 'btn small', type: 'button', onclick: () => choose('') }, 'Ganti mart'),
@@ -256,15 +250,12 @@ export function renderVisit(root, page, ctx) {
         h('button', { class: 'btn small danger', type: 'button', onclick: () => removeRow(DEF.partners, partner, ctx, `mart ${partner.name}`) }, 'Hapus mart')),
       h('section', { class: 'panel' },
         h('h2', {}, partner.name),
-        info ? h('p', { class: 'muted', style: 'margin:4px 0 0' }, info) : null,
         h('div', { class: 'stats', style: 'margin:12px 0' },
-          ...(titip || openTotal > 0 ? SIZES.map((z) => h('div', { class: 'stat' }, h('div', { class: 'v' }, `${int(atMart(z))} botol`), h('div', { class: 'l' }, `Di ${partner.name} · ${z} ml`))) : []),
-          unpaid > 0 ? h('div', { class: 'stat bad' }, h('div', { class: 'v' }, rp(unpaid)), h('div', { class: 'l' }, 'Belum dibayar')) : null),
-        titip ? null : h('p', { class: 'muted', style: 'margin:0 0 12px' }, 'Botol yang dikirim langsung dihitung terjual. Cukup tentukan sudah dibayar atau belum saat mengirim.'),
+          ...SIZES.map((z) => h('div', { class: 'stat' }, h('div', { class: 'v' }, `${int(atMart(z))} botol`), h('div', { class: 'l' }, `Di ${partner.name} · ${z} ml`)))),
         h('div', { class: 'form-actions', style: 'justify-content:flex-start' },
           h('button', { class: 'btn primary', type: 'button', onclick: () => openDelivery(partner) }, 'Tambah pengiriman'),
-          titip || openTotal > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => openNota(partner) }, 'Catat hasil nota') : null,
-          unpaid > 0 ? h('button', { class: 'btn', type: 'button', onclick: () => markAllPaid(partner) }, 'Tandai semua lunas') : null)),
+          h('button', { class: 'btn', type: 'button', onclick: () => openNota(partner) }, 'Catat hasil nota'))),
+      summaryPanel(partner),
       h('section', { class: 'panel' },
         h('h2', {}, 'HPP per botol'),
         h('p', { class: 'muted', style: 'margin:4px 0 0' }, 'Air kelapa dari produksi + botol kosong, stiker, dan bahan kemasan mart ini.'),
@@ -280,23 +271,24 @@ export function renderVisit(root, page, ctx) {
               ...partner.packDetail[z].map((r) => h('div', { class: 'kv' }, h('span', {}, `${r.name} × ${r.qty}`), h('span', {}, rp(r.sub)))))))
           : h('p', { class: 'form-error' }, 'Mart ini belum diisi bahan kemasan, jadi HPP belum termasuk botol dan stiker. ',
             h('button', { class: 'btn small', type: 'button', onclick: () => openPartnerForm(partner, ctx) }, 'Isi bahan kemasan'))),
-      pdfSection(partner),
+      open.length ? h('section', { class: 'panel' }, h('h2', {}, 'Botol yang masih di mart'),
+        h('ul', { class: 'open-list' }, open.map((d) => h('li', {}, `${fmtDate(d.date)} · ${sizeOf(d)} ml · sisa ${int(d.remaining)} dari ${int(d.qty)} botol @ ${rp(d.price)}`)))) : null,
       historySection(partner.id));
   }
 
   function showResult(partner, r) {
     const lines = [
-      r.sold > 0 ? h('div', { class: 'kv total' }, h('span', {}, `${r.paid ? (r.autoSold ? 'Sudah dibayar' : 'Uang diterima') : 'Tagihan belum dibayar'} (${int(r.sold)} ${r.autoSold ? 'terjual' : 'laku'})`), h('span', {}, rp(r.revenue))) : null,
+      r.sold > 0 ? h('div', { class: 'kv total' }, h('span', {}, `${r.paid ? 'Uang diterima' : 'Tagihan belum dibayar'} (${int(r.sold)} laku)`), h('span', {}, rp(r.revenue))) : null,
       r.delivered > 0 ? h('div', { class: 'kv' }, h('span', {}, `Dikirim ke ${partner.name}`), h('span', {}, `${int(r.delivered)} botol`)) : null,
       ...r.batches.map((b) => h('div', { class: 'kv' }, h('span', { class: 'muted' }, `${b.size} ml · dari ${b.code}`), h('span', {}, `${int(b.qty)} botol`))),
-      r.autoSold ? null : h('div', { class: 'kv' }, h('span', {}, `Botol di ${partner.name} sekarang`), h('span', {}, `${int(r.remainingAtPartner)} botol`)),
+      h('div', { class: 'kv' }, h('span', {}, `Botol di ${partner.name} sekarang`), h('span', {}, `${int(r.remainingAtPartner)} botol`)),
     ];
-    openDialog(h('div', { class: 'dialog-body' }, h('h2', {}, 'Tersimpan'), ...lines.filter(Boolean),
+    openDialog(h('div', { class: 'dialog-body' }, h('h2', {}, 'Tersimpan'), ...lines,
       h('div', { class: 'form-actions' }, h('button', { class: 'btn primary', type: 'button', onclick: closeDialog }, 'Selesai'))));
   }
 
   setChildren(root,
-    pageHeader('Mart', 'Pilih mart, lalu klik Tambah pengiriman. Stok gudang 620 ml dan 600 ml langsung terpotong. Beli putus dan langsung otomatis terjual.',
+    pageHeader('Mart', 'Pilih mart, lalu klik Tambah pengiriman atau Catat hasil nota.',
       h('button', { class: 'btn primary', type: 'button', onclick: newPartner }, 'Mart baru')),
     ...(partners.length ? [h('section', { class: 'panel' }, h('div', { class: 'fields' }, field('Mart', pick)))] : []),
     body);

@@ -137,17 +137,17 @@ const ALL = [
     columns: [
       { key: 'name', label: 'Mitra' },
       { key: 'type', label: 'Tipe' },
-      { key: 'scheme', label: 'Skema', render: (r) => ({ putus: 'Beli putus', langsung: 'Langsung' }[r.scheme] || 'Titip jual') },
+      { key: 'scheme', label: 'Skema', render: (r) => (r.scheme === 'putus' ? 'Beli putus' : 'Titip jual') },
       { key: 'price', label: 'Harga jual', type: 'rp' },
       { key: 'remaining', label: 'Botol di mitra', type: 'int' },
-      { key: 'contact', label: 'Kontak' },
+      { key: 'contact', label: 'Nomor HP' },
     ],
     fields: [
       { key: 'name', label: 'Nama mitra', type: 'text', required: true },
       { key: 'type', label: 'Tipe', type: 'text', suggest: (d, s) => csv(s.partnerTypes) },
-      { key: 'scheme', label: 'Skema', type: 'select', required: true, default: 'titip', options: [{ value: 'titip', label: 'Titip jual' }, { value: 'putus', label: 'Beli putus' }, { value: 'langsung', label: 'Langsung' }], help: 'Beli putus dan Langsung: botol yang dikirim otomatis dihitung terjual. Titip jual: hasil nota dicatat belakangan.' },
+      { key: 'scheme', label: 'Skema', type: 'select', required: true, default: 'titip', options: [{ value: 'titip', label: 'Titip jual' }, { value: 'putus', label: 'Beli putus' }] },
       { key: 'price', label: 'Harga jual default per botol (Rp)', type: 'money', default: 0 },
-      { key: 'contact', label: 'Kontak', type: 'text' },
+      { key: 'contact', label: 'Nomor HP', type: 'text' },
       { key: 'address', label: 'Alamat', type: 'text', full: true },
       { key: 'note', label: 'Catatan', type: 'textarea' },
     ],
@@ -278,6 +278,11 @@ const ALL = [
       { key: 'businessName', label: 'Nama usaha', type: 'text', required: true, full: true },
       { key: 'shelfLifeDays', label: 'Masa simpan botol (hari)', type: 'int', required: true, help: 'Tanggal expired batch otomatis dihitung dari tanggal produksi.' },
       { key: 'expenseCategories', label: 'Pilihan kategori pengeluaran', type: 'text', full: true, help: 'Pisahkan dengan koma.' },
+
+      { key: 'bankHead', type: 'heading', label: 'Rekening pembayaran', help: 'Dicantumkan di PDF Laporan Mart supaya mart tahu ke mana harus transfer.' },
+      { key: 'bankName', label: 'Nama bank', type: 'text', placeholder: 'Mis. BCA, BRI, Mandiri' },
+      { key: 'bankAccountNo', label: 'Nomor rekening', type: 'text' },
+      { key: 'bankAccountName', label: 'Atas nama', type: 'text', full: true },
 
       { key: 'notifHead', type: 'heading', label: 'Notifikasi otomatis', help: 'Pengingat buatan sendiri ada di bagian Pengingat di bawah.' },
       { key: 'notifEnabled', label: 'Aktifkan notifikasi', type: 'checkbox', default: true, full: true },

@@ -280,4 +280,52 @@ function martReport(rep, businessName) {
   return doc;
 }
 
-module.exports = { overallReport, martReport, slug };
+/* ---------- Laporan untuk mart (tagihan) ---------- */
+// Hanya: botol terkirim, botol expired, botol belum dibayar, total tagihan.
+// Tidak ada HPP, profit, atau stok gudang. Dibuat untuk dikirim ke mart.
+const COMPANY = 'DEWA FRESH COCO';
+
+function martBill(rep, settings = {}) {
+  const t = rep.totals; const p = rep.partner;
+  const doc = create(COMPANY, 'Laporan pengiriman dan tagihan');
+  const left = doc.page.margins.left; const w = contentWidth(doc);
+
+  // Identitas mart: nama, alamat, nomor HP.
+  heading(doc, 'Kepada');
+  doc.font('Helvetica-Bold').fontSize(12).fillColor(COLOR.ink).text(p.name, left, doc.y, { width: w });
+  doc.font('Helvetica').fontSize(9.5).fillColor(COLOR.ink)
+    .text(`Alamat: ${p.address || '-'}`, left, doc.y + 2, { width: w })
+    .text(`No. HP: ${p.contact || '-'}`, left, doc.y + 1, { width: w })
+    .text(`Periode: ${periodText(rep.range)}`, left, doc.y + 1, { width: w });
+  doc.moveDown(0.6);
+
+  heading(doc, 'Ringkasan');
+  ledger(doc, [
+    { label: 'Jumlah botol terkirim', value: `${int(t.delivered)} botol` },
+    { label: 'Jumlah botol expired', value: `${int(t.expired)} botol`, bad: t.expired > 0 },
+    { label: 'Jumlah botol belum dibayar', value: `${int(t.unpaidQty)} botol`, bad: t.unpaidQty > 0 },
+    { label: 'Total tagihan', value: rp(t.unpaid), bold: true, bad: t.unpaid > 0 },
+  ]);
+
+  // Cara pembayaran: nomor rekening dari Pengaturan.
+  heading(doc, 'Pembayaran');
+  const bank = String(settings.bankName || '').trim();
+  const no = String(settings.bankAccountNo || '').trim();
+  const holder = String(settings.bankAccountName || '').trim();
+  if (no) {
+    ledger(doc, [
+      { label: 'Bank', value: bank || '-' },
+      { label: 'Nomor rekening', value: no, bold: true },
+      { label: 'Atas nama', value: holder || COMPANY },
+    ]);
+  } else {
+    note(doc, 'Nomor rekening belum diisi. Isi di Pengaturan > Rekening pembayaran, lalu unduh ulang laporan ini.');
+  }
+  doc.moveDown(0.4);
+  note(doc, `Mohon transfer sebesar ${rp(t.unpaid)} ke rekening di atas. Terima kasih.`);
+
+  footers(doc, `${COMPANY} - ${p.name}`);
+  return doc;
+}
+
+module.exports = { overallReport, martReport, martBill, slug };

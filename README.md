@@ -73,20 +73,6 @@ Contoh: potong 50 kelapa, 20 botol 620 ml dan 50 botol 600 ml, langsung terlihat
 - Modal produksi dibagi ke 620 ml dan 600 ml sesuai total liter masing-masing, jadi HPP per botol tetap akurat.
 - Data lama: batch lama yang belum punya ukuran dianggap botol 600 ml. Kalau data lama hanya uji coba, pakai Pengaturan > Hapus transaksi saja.
 
-### Tipe mart: titip jual, beli putus, langsung
-
-- **Titip jual**: botol dikirim dulu, hasilnya (laku, kembali, expired) dicatat belakangan lewat **Catat hasil nota**.
-- **Beli putus** dan **Langsung**: begitu botol dikirim, otomatis dianggap terjual. Tidak perlu catat nota. Saat **Tambah pengiriman** cukup centang **Mart sudah bayar** atau biarkan kosong kalau belum. Tagihan yang belum dibayar bisa ditandai lunas sekaligus dengan tombol **Tandai semua lunas** di halaman mart.
-- Menghapus pengiriman beli putus / langsung ikut menghapus penjualan otomatisnya.
-
-### Halaman Mart (laporan per mart)
-
-Setelah memilih mart tampil: jumlah botol di mart, tombol Tambah pengiriman (dan Catat hasil nota khusus titip jual), HPP per botol beserta rincian bahan kemasan, unduh PDF, dan riwayat pengiriman.
-
-**Unduh PDF** (pilih periode: hari ini, kemarin, 7 hari, bulan ini, atau atur tanggal):
-- **PDF tagihan mart**: botol terjual per hari (620 ml dan 600 ml), total tagihan, sudah dibayar, dan yang harus dibayar. Tanpa HPP dan laba, aman dikirim ke mart.
-- **PDF laporan owner**: lengkap dengan HPP, laba, batch, dan semua transaksi.
-
 ### Bahan kemasan per mart (HPP botol kosong)
 
 Saat **Mart baru** atau **Ubah mart**, isi bahan untuk 1 botol kosong tiap ukuran, mis. Galang Mart 600 ml: Botol 600ml × 1, Stiker A × 1, Stiker B × 1.

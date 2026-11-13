@@ -145,7 +145,7 @@ const recordSuccess = (req) => attempts.delete(ipOf(req));
 
 /* ---------- Penjaga akses ---------- */
 // Yang boleh dibuka tanpa masuk: halaman masuk beserta file pendukungnya dan endpoint /api/auth.
-const PUBLIC = [/^\/login\.html$/, /^\/css\/style\.css$/, /^\/js\/(login|password-field)\.js$/, /^\/icons\//, /^\/manifest\.webmanifest$/, /^\/api\/auth\//];
+const PUBLIC = [/^\/login\.html$/, /^\/css\/style\.css$/, /^\/js\/(login|password-field|theme)\.js$/, /^\/icons\//, /^\/manifest\.webmanifest$/, /^\/api\/auth\//];
 
 function guard(req, res, next) {
   if (PUBLIC.some((re) => re.test(req.path)) || isLoggedIn(req)) return next();

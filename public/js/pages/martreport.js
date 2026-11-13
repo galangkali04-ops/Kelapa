@@ -14,7 +14,7 @@ const KIND = {
   'retur-rusak': () => badge('Retur rusak', 'bad'),
   expired: () => badge('Expired', 'bad'),
 };
-const SCHEME = { titip: 'Titip', putus: 'Putus', langsung: 'Langsung' };
+const SCHEME = { titip: 'Titip', putus: 'Putus' };
 
 export async function renderMartReport(root, page, ctx) {
   const id = ctx.params.get('id') || '';
@@ -73,7 +73,10 @@ export async function renderMartReport(root, page, ctx) {
   ];
 
   setChildren(root,
-    pageHeader(`Laporan ${p.name}`, info || 'Batch dan transaksi khusus mart ini.', rangeFilters(again), pdfButton(`/report/mart/${encodeURIComponent(id)}/pdf`), back),
+    pageHeader(`Laporan ${p.name}`, info || 'Batch dan transaksi khusus mart ini.', rangeFilters(again),
+      pdfButton(`/report/mart/${encodeURIComponent(id)}/pdf`, 'PDF Laporan Owner', { type: 'owner' }),
+      pdfButton(`/report/mart/${encodeURIComponent(id)}/pdf`, 'PDF Laporan Mart', { type: 'mart' }), back),
+    ...(ctx.settings.bankAccountNo ? [] : [h('p', { class: 'form-error', style: 'margin:-8px 0 16px' }, 'Nomor rekening belum diisi, jadi PDF Laporan Mart belum mencantumkannya. Isi di Pengaturan > Rekening pembayaran.')]),
     ledger, stats,
     h('section', { class: 'panel flush' },
       h('div', { style: 'padding:20px 20px 0' }, h('h2', {}, 'Batch di mart ini'), h('p', { class: 'muted' }, `Hanya batch yang dikirim ke ${p.name}. Angkanya milik mart ini saja.`)),

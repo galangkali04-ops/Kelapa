@@ -115,7 +115,11 @@ api.get('/report/mart/:id/pdf', (req, res) => {
   const db = store.get();
   const rep = calc.martReport(db, req.params.id, okDate(req.query.from), okDate(req.query.to));
   if (!rep) return res.status(404).json({ error: 'Mart tidak ditemukan.' });
-  return sendPdf(res, pdf.martReport(rep, db.settings.businessName || 'Air Kelapa'), `laporan-${pdf.slug(rep.partner.name)}-${calc.today()}.pdf`);
+  // ?type=mart -> laporan ringkas untuk mart (tagihan). Selain itu -> laporan owner lengkap.
+  if (req.query.type === 'mart') {
+    return sendPdf(res, pdf.martBill(rep, db.settings), `tagihan-${pdf.slug(rep.partner.name)}-${calc.today()}.pdf`);
+  }
+  return sendPdf(res, pdf.martReport(rep, db.settings.businessName || 'Air Kelapa'), `laporan-owner-${pdf.slug(rep.partner.name)}-${calc.today()}.pdf`);
 });
 
 api.get('/backup', (req, res) => {

@@ -545,6 +545,7 @@ function martReport(db, partnerId, from, to) {
     revenue, cogs, grossProfit: revenue - cogs, expiredLoss, returnLoss,
     netProfit: revenue - cogs - expiredLoss - returnLoss,
     unpaid: sum(sales.filter((s) => !s.paid), (s) => s.total),
+    unpaidQty: sum(sales.filter((s) => !s.paid), (s) => num(s.qty)),
     remaining: partner.remaining, // sisa saat ini, tidak tergantung periode
   };
 
